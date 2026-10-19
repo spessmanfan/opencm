@@ -403,5 +403,11 @@
 			if(HAS_TRAIT(ravager_user, TRAIT_ABILITY_SUPER_EMPOWER))
 				new /datum/effects/xeno_slow/superslow(carbon_target, ravager_user, ttl = superslow_duration)
 
+		// Per tile, not deduped, unlike Flurry/High Gallop which only count once per use.
+		var/obj/vehicle/multitile/vehicle = get_multitile_vehicle_at(target_turf)
+		if(vehicle)
+			vehicle.take_damage_type(damage, "slash", ravager_user, unmitigated = TRUE)
+			playsound(vehicle, "alien_claw_flesh", 30, TRUE)
+
 	apply_cooldown()
 	return ..()

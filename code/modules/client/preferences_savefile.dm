@@ -528,6 +528,8 @@
 	toggles_insert = sanitize_integer(toggles_insert, 0, SHORT_REAL_LIMIT, initial(toggles_insert))
 	toggles_ert_pred = sanitize_integer(toggles_ert_pred, 0, SHORT_REAL_LIMIT, initial(toggles_ert_pred))
 	toggles_admin = sanitize_integer(toggles_admin, 0, SHORT_REAL_LIMIT, initial(toggles_admin))
+	// TEMP removal for test merge/event cases.
+	//toggles_vehicle = sanitize_integer(toggles_vehicle, 0, SHORT_REAL_LIMIT, initial(toggles_vehicle))
 	UI_style_color = sanitize_hexcolor(UI_style_color, initial(UI_style_color))
 	UI_style_alpha = sanitize_integer(UI_style_alpha, 0, 255, initial(UI_style_alpha))
 	item_animation_pref_level = sanitize_integer(item_animation_pref_level, SHOW_ITEM_ANIMATIONS_NONE, SHOW_ITEM_ANIMATIONS_ALL, SHOW_ITEM_ANIMATIONS_ALL)
