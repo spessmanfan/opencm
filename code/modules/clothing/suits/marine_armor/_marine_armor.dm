@@ -420,7 +420,7 @@
 	armor_internaldamage = CLOTHING_ARMOR_MEDIUMHIGH
 	armor_energy = CLOTHING_ARMOR_MEDIUM
 	specialty = "B12 pattern marine"
-	light_range = 5
+	light_range = 6
 
 /obj/item/clothing/suit/storage/marine/tanker
 	name = "\improper M3 pattern tanker armor"
@@ -489,7 +489,7 @@
 	armor_rad = CLOTHING_ARMOR_MEDIUMHIGH
 	armor_internaldamage = CLOTHING_ARMOR_LOW
 	storage_slots = 2
-	light_range = 5
+	light_range = 6
 
 /obj/item/clothing/suit/storage/marine/light/padded
 	icon_state = "L1"
@@ -717,7 +717,7 @@
 	slowdown = SLOWDOWN_ARMOR_HEAVY
 	specialty = "B18 defensive"
 	unacidable = TRUE
-	light_range = 5
+	light_range = 6
 	var/injections = 4
 
 /obj/item/clothing/suit/storage/marine/specialist/verb/inject()
