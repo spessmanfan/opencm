@@ -436,7 +436,7 @@
 // M3 pattern marine armor
 /obj/item/clothing/suit/storage/marine/medium
 	armor_variation = 6
-	light_range = 5
+	light_range = 6
 
 /obj/item/clothing/suit/storage/marine/medium/padded
 	name = "M3 pattern padded marine armor"
@@ -489,6 +489,7 @@
 	armor_rad = CLOTHING_ARMOR_MEDIUMHIGH
 	armor_internaldamage = CLOTHING_ARMOR_LOW
 	storage_slots = 2
+	light_range = 5
 
 /obj/item/clothing/suit/storage/marine/light/padded
 	icon_state = "L1"
@@ -665,7 +666,7 @@
 	storage_slots = 2
 	slowdown = SLOWDOWN_ARMOR_LOWHEAVY
 	movement_compensation = SLOWDOWN_ARMOR_MEDIUM
-	light_range = 5
+	light_range = 6
 
 /obj/item/clothing/suit/storage/marine/heavy/padded
 	icon_state = "H1"
@@ -716,6 +717,7 @@
 	slowdown = SLOWDOWN_ARMOR_HEAVY
 	specialty = "B18 defensive"
 	unacidable = TRUE
+	light_range = 5
 	var/injections = 4
 
 /obj/item/clothing/suit/storage/marine/specialist/verb/inject()

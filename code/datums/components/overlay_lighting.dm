@@ -55,7 +55,7 @@
 
 	///Overlay effect to cut into the darkness and provide light.
 	var/image/visible_mask
-	///Lazy list to track the turfs being affected by our light, to determine their visibility.
+	///Lazy assoc list of turf -> dynamic_lumcount currently contributed to it by us, so it can be fully reverted and rescaled regardless of falloff.
 	var/list/turf/affected_turfs
 	///Movable atom currently holding the light. Parent might be a flashlight, for example, but that might be held by a mob or something else.
 	var/atom/movable/current_holder
@@ -164,11 +164,11 @@
 ///Clears the affected_turfs lazylist, removing from its contents the effects of being near the light.
 /datum/component/overlay_lighting/proc/clean_old_turfs()
 	for(var/turf/lit_turf as anything in affected_turfs)
-		lit_turf.dynamic_lumcount -= lum_power
+		lit_turf.dynamic_lumcount -= affected_turfs[lit_turf]
 	affected_turfs = null
 
 
-///Populates the affected_turfs lazylist, adding to its contents the effects of being near the light.
+///Populates the affected_turfs lazylist, adding to its contents the effects of being near the light. Fades out towards the edge of the range instead of cutting off sharply.
 /datum/component/overlay_lighting/proc/get_new_turfs()
 	if(!current_holder)
 		return
@@ -177,11 +177,13 @@
 		//Range here is 1 because actual range of lighting mask is 1 tile even if it says that range is 2
 		for(var/turf/lit_turf as anything in RANGE_TURFS(1, current_holder.loc))
 			lit_turf.dynamic_lumcount += lum_power
-			affected_turfs += lit_turf
+			affected_turfs[lit_turf] = lum_power
 	else
-		for(var/turf/lit_turf in view(lumcount_range, get_turf(current_holder)))
-			lit_turf.dynamic_lumcount += lum_power
-			affected_turfs += lit_turf
+		var/turf/our_turf = get_turf(current_holder)
+		for(var/turf/lit_turf in view(lumcount_range, our_turf))
+			var/falloff_power = lum_power * (1 - (get_dist(our_turf, lit_turf) / (lumcount_range + 1)))
+			lit_turf.dynamic_lumcount += falloff_power
+			affected_turfs[lit_turf] = falloff_power
 
 
 ///Clears the old affected turfs and populates the new ones.
@@ -452,11 +454,14 @@
 /datum/component/overlay_lighting/proc/set_lum_power(new_lum_power)
 	if(lum_power == new_lum_power)
 		return
-	. = lum_power
+	var/old_lum_power = lum_power
 	lum_power = new_lum_power
-	var/difference = . - lum_power
+	var/ratio = old_lum_power ? (new_lum_power / old_lum_power) : 0
 	for(var/turf/lit_turf as anything in affected_turfs)
-		lit_turf.dynamic_lumcount -= difference
+		var/old_contribution = affected_turfs[lit_turf]
+		var/new_contribution = old_contribution * ratio
+		lit_turf.dynamic_lumcount += (new_contribution - old_contribution)
+		affected_turfs[lit_turf] = new_contribution
 
 ///Here we append the behavior associated to changing lum_power.
 /datum/component/overlay_lighting/proc/cast_directional_light()

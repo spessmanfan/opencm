@@ -22,7 +22,6 @@ can cause issues with ammo types getting mixed up during the burst.
 	wield_delay = WEAPON_DELAY_NORMAL //Shotguns are as hard to pull up as a rifle. They're quite bulky after all
 	has_empty_icon = FALSE
 	has_open_icon = FALSE
-	fire_delay_group = list(FIRE_DELAY_GROUP_SHOTGUN)
 
 	fire_sound = 'sound/weapons/gun_shotgun.ogg'
 	reload_sound = "shell_load"
@@ -653,6 +652,7 @@ can cause issues with ammo types getting mixed up during the burst.
 	flags_gun_features = GUN_CAN_POINTBLANK|GUN_INTERNAL_MAG
 	has_open_icon = TRUE
 	civilian_usable_override = TRUE // Come on. It's THE survivor shotgun.
+	fire_delay_group = list(FIRE_DELAY_GROUP_SHOTGUN)
 	additional_fire_group_delay = 1.5 SECONDS
 
 /obj/item/weapon/gun/shotgun/double/Initialize()
@@ -1317,7 +1317,6 @@ can cause issues with ammo types getting mixed up during the burst.
 /obj/item/weapon/gun/shotgun/pump/Initialize(mapload, spawn_empty)
 	. = ..()
 	pump_delay = FIRE_DELAY_TIER_5*2
-	additional_fire_group_delay += pump_delay
 
 	if(istype(src, /obj/item/weapon/gun/shotgun/pump/dual_tube/cmb))
 		AddElement(/datum/element/corp_label/henjin_garcia)
