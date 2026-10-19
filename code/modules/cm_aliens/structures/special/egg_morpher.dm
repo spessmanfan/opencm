@@ -6,6 +6,7 @@
 	name = XENO_STRUCTURE_EGGMORPH
 	desc = "A disgusting biomass generator that reeks of rotting flesh. Capable of producing facehuggers on its own."
 	icon_state = "eggmorph"
+	block_range = 0
 	health = 400
 	appearance_flags = KEEP_TOGETHER
 	layer = FACEHUGGER_LAYER

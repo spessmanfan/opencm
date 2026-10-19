@@ -837,7 +837,7 @@
 		return FALSE
 
 	for(var/mob/living/body in src)
-		if(body.stat == DEAD)
+		if(body.stat == DEAD && body.chestburst != 2)
 			to_chat(xeno, SPAN_XENOWARNING("The body is in the way!"))
 			return FALSE
 

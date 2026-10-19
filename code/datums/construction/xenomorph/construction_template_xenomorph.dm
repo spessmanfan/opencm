@@ -58,6 +58,7 @@
 	description = "Processes hatched hosts into new facehuggers."
 	build_type = /obj/effect/alien/resin/special/eggmorph
 	build_icon_state = "eggmorph_preview"
+	block_range = 0
 
 /datum/construction_template/xenomorph/plasma_tree
 	name = XENO_STRUCTURE_PLASMA_TREE

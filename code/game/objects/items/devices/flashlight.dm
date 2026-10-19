@@ -329,7 +329,7 @@
 	can_be_broken = FALSE
 	rotation_on_throw = TRUE
 	var/burnt_out = FALSE
-	var/fuel = 16 MINUTES
+	var/fuel = 17.25 MINUTES // Two minutes at full range; later burn stages keep their original durations.
 	var/fuel_rate = AMOUNT_PER_TIME(1 SECONDS, 1 SECONDS)
 	var/on_damage = 7
 	var/ammo_datum = /datum/ammo/flare
@@ -387,7 +387,7 @@
 
 /obj/item/device/flashlight/flare/proc/flare_burn_down() //Controls the way in which flares slowly die out. Needs to be overriden by children, or they will be forced to use this light behavior.
 	switch(fuel) //The code belows controls the timing on a flares burn out, and the corresponding reduction in effective range.
-		if(15.25 MINUTES to 16 MINUTES)
+		if(15.25 MINUTES to 17.25 MINUTES)
 			set_light_range(7)
 		if(14.5 MINUTES to 15.24 MINUTES)
 			set_light_range(6)

@@ -507,10 +507,13 @@
 		list(XENO_CASTE_LARVA = 0, XENO_CASTE_QUEEN = 0),
 		list(XENO_CASTE_DRONE = 0, XENO_CASTE_RUNNER = 0, XENO_CASTE_SENTINEL = 0, XENO_CASTE_DEFENDER = 0),
 		list(XENO_CASTE_HIVELORD = 0, XENO_CASTE_BURROWER = 0, XENO_CASTE_CARRIER = 0, XENO_CASTE_LURKER = 0, XENO_CASTE_SPITTER = 0, XENO_CASTE_WARRIOR = 0),
-		list(XENO_CASTE_BOILER = 0, XENO_CASTE_CRUSHER = 0, XENO_CASTE_PRAETORIAN = 0, XENO_CASTE_RAVAGER = 0, XENO_CASTE_DESPOILER = 0)
+		list(XENO_CASTE_BOILER = 0, XENO_CASTE_CRUSHER = 0, XENO_CASTE_PRAETORIAN = 0, XENO_CASTE_RAVAGER = 0)
 	)
 
 	for(var/mob/living/carbon/xenomorph/xeno as anything in totalXenos)
+		if(xeno.caste_type == XENO_CASTE_DESPOILER)
+			continue
+
 		//don't show xenos in the thunderdome when admins test stuff.
 		if(should_block_game_interaction(xeno))
 			var/area/cur_area = get_area(xeno)
@@ -546,7 +549,7 @@
 		list(XENO_CASTE_LARVA = "", XENO_CASTE_QUEEN = "", XENO_CASTE_PREDALIEN_LARVA = "", XENO_CASTE_HELLHOUND = ""),
 		list(XENO_CASTE_DRONE = "", XENO_CASTE_RUNNER = "", XENO_CASTE_SENTINEL = "", XENO_CASTE_DEFENDER = "", XENO_CASTE_PREDALIEN = ""),
 		list(XENO_CASTE_HIVELORD = "", XENO_CASTE_BURROWER = "", XENO_CASTE_CARRIER = "", XENO_CASTE_LURKER = "", XENO_CASTE_SPITTER = "", XENO_CASTE_WARRIOR = ""),
-		list(XENO_CASTE_BOILER = "", XENO_CASTE_CRUSHER = "", XENO_CASTE_PRAETORIAN = "", XENO_CASTE_RAVAGER = "", XENO_CASTE_DESPOILER = "")
+		list(XENO_CASTE_BOILER = "", XENO_CASTE_CRUSHER = "", XENO_CASTE_PRAETORIAN = "", XENO_CASTE_RAVAGER = "")
 	)
 
 	for(var/caste in GLOB.xeno_datum_list)
@@ -575,6 +578,9 @@
 	var/list/xenos = list()
 
 	for(var/mob/living/carbon/xenomorph/xeno as anything in totalXenos)
+		if(xeno.caste_type == XENO_CASTE_DESPOILER)
+			continue
+
 		if(should_block_game_interaction(xeno))
 			var/area/cur_area = get_area(xeno)
 			if(!(cur_area.flags_atom & AREA_ALLOW_XENO_JOIN))
@@ -660,6 +666,9 @@
 	var/list/xenos = list()
 
 	for(var/mob/living/carbon/xenomorph/xeno as anything in totalXenos)
+		if(xeno.caste_type == XENO_CASTE_DESPOILER)
+			continue
+
 		if(should_block_game_interaction(xeno))
 			var/area/cur_area = get_area(xeno)
 			if(!(cur_area.flags_atom & AREA_ALLOW_XENO_JOIN))
@@ -691,6 +700,9 @@
 	var/list/xenos = list()
 
 	for(var/mob/living/carbon/xenomorph/xeno as anything in totalXenos)
+		if(xeno.caste_type == XENO_CASTE_DESPOILER)
+			continue
+
 		if(should_block_game_interaction(xeno))
 			var/area/cur_area = get_area(xeno)
 			if(!(cur_area.flags_atom & AREA_ALLOW_XENO_JOIN))

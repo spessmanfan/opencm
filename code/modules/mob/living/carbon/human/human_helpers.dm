@@ -411,6 +411,8 @@
 	return (item == wear_l_ear) || (item == wear_r_ear)
 
 /mob/living/carbon/human/can_be_pulled_by(mob/mob)
+	if(isxeno(mob) && stat == DEAD && chestburst == 2)
+		return TRUE
 	var/ignores_stripdrag_flag = FALSE
 	if(ishuman(mob))
 		var/mob/living/carbon/human/human = mob

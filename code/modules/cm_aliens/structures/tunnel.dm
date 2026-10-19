@@ -248,11 +248,6 @@
 		to_chat(user, SPAN_XENOWARNING("We can't climb through a tunnel while immobile."))
 		return XENO_NO_DELAY_ACTION
 
-	if(user.hauled_mob)
-		to_chat(user, SPAN_WARNING("We can't tunnel and haul someone at the same time."))
-		user.balloon_alert(user, "we're hauling someone!", text_color = "#7d32bb", delay = 1 SECONDS)
-		return XENO_NO_DELAY_ACTION
-
 	if(!length(hive.tunnels))
 		to_chat(user, SPAN_WARNING("[src] doesn't seem to lead anywhere."))
 		return XENO_NO_DELAY_ACTION
@@ -281,11 +276,6 @@
 	xeno_attack_delay(user)
 	if(!do_after(user, tunnel_time, INTERRUPT_NO_NEEDHAND, BUSY_ICON_GENERIC))
 		to_chat(user, SPAN_WARNING("Our crawling was interrupted!"))
-		return XENO_NO_DELAY_ACTION
-
-	if(user.hauled_mob)
-		to_chat(user, SPAN_WARNING("We can't tunnel and haul someone at the same time."))
-		user.balloon_alert(user, "we're hauling someone!", text_color = "#7d32bb", delay = 1 SECONDS)
 		return XENO_NO_DELAY_ACTION
 
 	if(!length(hive.tunnels)) //Make sure other tunnels exist
