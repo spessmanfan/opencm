@@ -33,6 +33,12 @@
 	ability_primacy = XENO_PRIMARY_ACTION_3
 	plasma_cost = 10
 	xeno_cooldown = 11 SECONDS
+	var/sweep_range = 1
+	var/sweep_damage = 15
+	var/sweep_knockdown = 1
+	var/sweep_damage_min = null
+	var/sweep_armor_penetration = 0
+	var/sweep_requires_sight = FALSE
 
 /datum/action/xeno_action/activable/fortify
 	name = "Fortify"

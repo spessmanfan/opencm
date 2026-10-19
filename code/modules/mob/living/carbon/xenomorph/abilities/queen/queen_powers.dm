@@ -816,21 +816,146 @@
 /datum/action/xeno_action/activable/expand_weeds/proc/reset_turf_cooldown(turf/T)
 	recently_built_turfs -= T
 
-/datum/action/xeno_action/onclick/screech/use_ability(atom/target)
+/datum/action/xeno_action/activable/pounce/queen_screech/initialize_pounce_pass_flags()
+	// Human hits are handled on each entered tile, so they do not end the charge.
+	pounce_pass_flags = PASS_OVER_THROW_MOB | PASS_MOB_THRU_HUMAN
+
+/datum/action/xeno_action/activable/pounce/queen_screech/New()
+	. = ..()
+	pounce_callbacks[/turf] = CALLBACK(src, PROC_REF(impact_turf))
+
+/datum/action/xeno_action/activable/pounce/queen_screech/proc/impact_turf(turf/landing)
 	var/mob/living/carbon/xenomorph/queen/xeno = owner
+	if(landing.density)
+		xeno.turf_launch_collision(landing)
 
-	if (!istype(xeno))
+/datum/action/xeno_action/activable/pounce/queen_screech/action_activate()
+	var/mob/living/carbon/xenomorph/queen/xeno = owner
+	if(!istype(xeno) || !xeno.check_state() || xeno.ovipositor || hidden || !action_cooldown_check())
 		return
-
-	if (!action_cooldown_check())
+	. = ..()
+	if(xeno.selected_ability != src)
+		stop_focus()
 		return
-
-	if (!xeno.check_state())
+	if(focusing && xeno.is_zoomed)
 		return
+	stop_focus()
+	old_viewsize = xeno.viewsize
+	old_tileoffset = xeno.tileoffset
+	xeno.viewsize = GLOB.world_view_size
+	xeno.tileoffset = 3
+	xeno.zoom_in()
+	focusing = xeno.is_zoomed
+	if(focusing)
+		RegisterSignal(xeno, COMSIG_ATOM_DIR_CHANGE, PROC_REF(update_focus_direction))
+		update_focus_direction(xeno, xeno.dir, xeno.dir)
+	to_chat(xeno, SPAN_XENONOTICE("We focus our vision. Choose a tile with [xeno.get_ability_mouse_name()] to charge and screech!"))
 
-	if (!check_and_use_plasma_owner())
+/datum/action/xeno_action/activable/pounce/queen_screech/proc/update_focus_direction(mob/living/carbon/xenomorph/queen/xeno, old_direction, new_direction)
+	SIGNAL_HANDLER
+	if(!focusing || !xeno.is_zoomed || !xeno.client)
 		return
+	xeno.client.set_pixel_x(32 * (new_direction & EAST ? 3 : (new_direction & WEST ? -3 : 0)))
+	xeno.client.set_pixel_y(32 * (new_direction & NORTH ? 3 : (new_direction & SOUTH ? -3 : 0)))
 
+/datum/action/xeno_action/activable/pounce/queen_screech/proc/stop_focus()
+	var/mob/living/carbon/xenomorph/queen/xeno = owner
+	if(!focusing || !istype(xeno))
+		return
+	UnregisterSignal(xeno, COMSIG_ATOM_DIR_CHANGE)
+	xeno.zoom_out()
+	xeno.viewsize = old_viewsize
+	xeno.tileoffset = old_tileoffset
+	focusing = FALSE
+
+/datum/action/xeno_action/activable/pounce/queen_screech/on_deselect()
+	stop_focus()
+	return ..()
+
+/datum/action/xeno_action/activable/pounce/queen_screech/hide_from(mob/xeno)
+	stop_focus()
+	return ..()
+
+/datum/action/xeno_action/activable/pounce/queen_screech/remove_from(mob/living/carbon/xenomorph/xeno)
+	stop_focus()
+	clear_warning()
+	return ..()
+
+/datum/action/xeno_action/activable/pounce/queen_screech/Destroy()
+	stop_focus()
+	clear_warning()
+	return ..()
+
+/datum/action/xeno_action/activable/pounce/queen_screech/use_ability(atom/target)
+	var/mob/living/carbon/xenomorph/queen/xeno = owner
+	if(!istype(xeno) || !focusing || !xeno.is_zoomed || xeno.ovipositor || xeno.action_busy || !action_cooldown_check())
+		return FALSE
+	var/turf/target_turf = get_turf(target)
+	if(!target_turf || target_turf.z != xeno.z || target_turf == get_turf(xeno) || target_turf.density || istype(target_turf, /turf/open_space))
+		return FALSE
+	var/turf/focus_center = get_turf(xeno)
+	for(var/i in 1 to 3)
+		var/turf/next_center = get_step(focus_center, xeno.dir)
+		if(next_center)
+			focus_center = next_center
+	if(get_dist(xeno, target_turf) > distance || !(target_turf in view(GLOB.world_view_size, focus_center)) || !(target_turf in view(distance, xeno)))
+		to_chat(xeno, SPAN_XENOWARNING("We must choose a visible tile within [distance] tiles!"))
+		return FALSE
+	screech_target = target_turf
+	charge_victims.Cut()
+	. = ..(target_turf)
+	clear_warning()
+	screech_target = null
+	stop_focus()
+	if(!QDELETED(xeno) && xeno.selected_ability == src)
+		action_deselect()
+		xeno.set_selected_ability(null)
+
+/datum/action/xeno_action/activable/pounce/queen_screech/pre_windup_effects()
+	charge_warning = new(screech_target)
+	charge_warning.name = "Queen charge warning"
+	charge_warning.visible_message(SPAN_HIGHDANGER("The Queen fixes her gaze here and braces to charge. Get away from the marked tile!"), null, null, 7)
+
+/datum/action/xeno_action/activable/pounce/queen_screech/pre_pounce_effects()
+	charging = TRUE
+	RegisterSignal(owner, COMSIG_MOVABLE_MOVED, PROC_REF(on_charge_move))
+
+/datum/action/xeno_action/activable/pounce/queen_screech/proc/on_charge_move(mob/living/carbon/xenomorph/queen/xeno, atom/oldloc, direction, forced)
+	SIGNAL_HANDLER
+	if(!charging || !HAS_TRAIT(xeno, TRAIT_LAUNCHED) || !isturf(xeno.loc))
+		return
+	if(!xeno.check_state())
+		REMOVE_TRAIT(xeno, TRAIT_LAUNCHED, LAUNCHED_TRAIT)
+		return
+	playsound(xeno, 'sound/effects/alien_footstep_charge1.ogg', 65, TRUE)
+	var/list/occupants = xeno.loc.contents.Copy()
+	for(var/mob/living/carbon/human/victim in occupants)
+		if(victim in charge_victims || victim.stat == DEAD || xeno.can_not_harm(victim) || HAS_TRAIT(victim, TRAIT_NESTED))
+			continue
+		charge_victims += victim
+		victim.apply_charger_ram(xeno)
+
+/datum/action/xeno_action/activable/pounce/queen_screech/post_windup_effects(interrupted)
+	. = ..()
+	stop_focus()
+	if(interrupted)
+		clear_warning()
+
+/datum/action/xeno_action/activable/pounce/queen_screech/proc/clear_warning()
+	QDEL_NULL(charge_warning)
+	charging = FALSE
+	if(owner)
+		UnregisterSignal(owner, COMSIG_MOVABLE_MOVED)
+
+/datum/action/xeno_action/activable/pounce/queen_screech/additional_effects_always()
+	clear_warning()
+	var/mob/living/carbon/xenomorph/queen/xeno = owner
+	if(QDELETED(xeno) || hidden || xeno.ovipositor || !xeno.check_state() || get_turf(xeno) != screech_target)
+		return
+	release_screech()
+
+/datum/action/xeno_action/activable/pounce/queen_screech/proc/release_screech()
+	var/mob/living/carbon/xenomorph/queen/xeno = owner
 	//screech is so powerful it kills huggers in our hands
 	if(istype(xeno.r_hand, /obj/item/clothing/mask/facehugger))
 		var/obj/item/clothing/mask/facehugger/hugger = xeno.r_hand
@@ -860,7 +985,8 @@
 	FOR_DOVIEW(var/mob/living/carbon/M, 7, xeno, HIDE_INVISIBLE_OBSERVER)
 		mobs_in_view += M
 	FOR_DOVIEW_END
-	for(var/mob/living/carbon/M in orange(10, xeno))
+	// Include the impact tile: a direct-hit host shares it with the Queen.
+	for(var/mob/living/carbon/M in range(10, xeno))
 		if(SEND_SIGNAL(M, COMSIG_MOB_SCREECH_ACT, xeno) & COMPONENT_SCREECH_ACT_CANCEL)
 			continue
 		M.handle_queen_screech(xeno, mobs_in_view)
@@ -884,9 +1010,6 @@
 		if(sensors)
 			sensors.deal_unmitigated_damage(initial(sensors.health) * QUEEN_SCREECH_CAMERA_DAMAGE_PCT)
 
-	apply_cooldown()
-
-	return ..()
 
 /datum/action/xeno_action/activable/gut/use_ability(atom/target)
 	var/mob/living/carbon/xenomorph/queen/xeno = owner

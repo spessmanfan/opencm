@@ -129,12 +129,25 @@
 	spit_cost = 50
 	effect_power = 2
 	drain_power = 4
+	increment_amount = 10
 
 	accuracy = HIT_ACCURACY_TIER_5*2
 	max_range = 6 - 1
 
-/datum/ammo/xeno/toxin/queen/on_hit_mob(mob/M,obj/projectile/P)
-	neuro_callback.Invoke(M, effect_power, drain_power, TRUE, TRUE, FALSE)
+/datum/ammo/xeno/toxin/queen/on_hit_mob(mob/M, obj/projectile/P)
+	// Keep the Queen's stimulant drain, but replace instant neuro with stacks.
+	neuro_callback.Invoke(M, effect_power, drain_power, FALSE, TRUE, FALSE, FALSE)
+	if(!ishuman(M))
+		return
+	var/mob/living/carbon/human/human = M
+	if(human.stat == DEAD || skillcheck(human, SKILL_ENDURANCE, SKILL_ENDURANCE_MAX))
+		return
+	if(human.chem_effect_flags & CHEM_EFFECT_RESIST_NEURO || human.species.flags & NO_NEURO)
+		return
+	var/datum/effects/sentinel_neuro_stacks/stacks = locate() in human.effects_list
+	if(!stacks)
+		stacks = new(human, P.firer)
+	stacks.increment_stack_count(increment_amount)
 
 /datum/ammo/xeno/toxin/shotgun
 	name = "neurotoxic droplet"

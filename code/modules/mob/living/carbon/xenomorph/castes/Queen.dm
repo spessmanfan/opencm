@@ -317,6 +317,7 @@
 		/datum/action/xeno_action/watch_xeno,
 		/datum/action/xeno_action/onclick/toggle_seethrough,
 		/datum/action/xeno_action/activable/tail_stab,
+		/datum/action/xeno_action/onclick/tail_sweep/queen,
 		/datum/action/xeno_action/activable/place_construction/not_primary, //normally fifth macro but not as important for queen
 		/datum/action/xeno_action/activable/corrosive_acid,
 		/datum/action/xeno_action/onclick/emit_pheromones,
@@ -349,6 +350,7 @@
 		/datum/action/xeno_action/watch_xeno,
 		/datum/action/xeno_action/onclick/toggle_seethrough,
 		/datum/action/xeno_action/activable/tail_stab,
+		/datum/action/xeno_action/onclick/tail_sweep/queen,
 		/datum/action/xeno_action/activable/place_construction/not_primary, //normally fifth macro but not as important for queen
 		/datum/action/xeno_action/activable/corrosive_acid,
 		/datum/action/xeno_action/onclick/emit_pheromones,
@@ -361,7 +363,7 @@
 		/datum/action/xeno_action/onclick/manage_hive,
 		/datum/action/xeno_action/onclick/send_thoughts,
 		/datum/action/xeno_action/activable/info_marker/queen,
-		/datum/action/xeno_action/onclick/screech, //custom macro, Screech
+		/datum/action/xeno_action/activable/pounce/queen_screech, //custom macro, Screech
 		/datum/action/xeno_action/activable/xeno_spit/queen_macro, //third macro
 		/datum/action/xeno_action/onclick/shift_spits, //second macro
 		/datum/action/xeno_action/onclick/autoweeding_toggle,
@@ -370,7 +372,7 @@
 	// Abilities they get when they've successfully aged.
 	var/mobile_aged_abilities = list(
 		/datum/action/xeno_action/onclick/toggle_seethrough,
-		/datum/action/xeno_action/onclick/screech, //custom macro, Screech
+		/datum/action/xeno_action/activable/pounce/queen_screech, //custom macro, Screech
 		/datum/action/xeno_action/activable/xeno_spit/queen_macro, //third macro
 		/datum/action/xeno_action/onclick/shift_spits, //second macro
 	)
@@ -797,7 +799,7 @@
 		/datum/action/xeno_action/onclick/send_thoughts,
 		/datum/action/xeno_action/activable/info_marker/queen,
 		// Screech is typically new for this list, but its possible they never ovi and it then is forced here:
-		/datum/action/xeno_action/onclick/screech, //custom macro, Screech
+		/datum/action/xeno_action/activable/pounce/queen_screech, //custom macro, Screech
 		// These are new and their arrangement matters:
 		/datum/action/xeno_action/onclick/remove_eggsac,
 		/datum/action/xeno_action/onclick/set_xeno_lead,

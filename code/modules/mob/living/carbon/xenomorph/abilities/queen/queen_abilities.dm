@@ -26,7 +26,7 @@
 	action_type = XENO_ACTION_CLICK
 	xeno_cooldown = 8 SECONDS
 
-/datum/action/xeno_action/onclick/screech
+/datum/action/xeno_action/activable/pounce/queen_screech
 	name = "Screech (250)"
 	action_icon_state = "screech"
 	macro_path = /datum/action/xeno_action/verb/verb_screech
@@ -36,6 +36,41 @@
 	cooldown_message = "You feel your throat muscles vibrate. You are ready to screech again."
 	no_cooldown_msg = FALSE // Needed for onclick actions
 	ability_primacy = XENO_SCREECH
+
+	action_text = "charge"
+	distance = 10
+	knockdown = FALSE
+	freeze_self = FALSE
+	windup = TRUE
+	windup_duration = 2.5 SECONDS
+	tracks_target = FALSE
+	// Double the per-tile delay used by launch_towards, for half the travel speed.
+	throw_speed = 10 / (2 * (10 / SPEED_FAST - 0.5) + 0.5)
+	/// The target stays fixed throughout the windup and charge.
+	var/turf/screech_target
+	var/obj/effect/warning/droppod/charge_warning
+	var/focusing = FALSE
+	var/old_viewsize
+	var/old_tileoffset
+	var/list/charge_victims = list()
+	var/charging = FALSE
+
+/datum/action/xeno_action/onclick/tail_sweep/queen
+	name = "Royal Tail Sweep"
+	macro_path = /datum/action/xeno_action/verb/verb_queen_tail_sweep
+	ability_primacy = XENO_NOT_PRIMARY_ACTION
+	sweep_range = 2
+	sweep_damage = 50
+	sweep_damage_min = 40
+	sweep_knockdown = 2.5 SECONDS / GLOBAL_STATUS_MULTIPLIER
+	sweep_armor_penetration = 20
+	sweep_requires_sight = TRUE
+
+/datum/action/xeno_action/verb/verb_queen_tail_sweep()
+	set category = "Alien"
+	set name = "Royal Tail Sweep"
+	set hidden = TRUE
+	handle_xeno_macro(src, "Royal Tail Sweep")
 
 /datum/action/xeno_action/activable/queen_give_plasma
 	name = "Give Plasma (400)"

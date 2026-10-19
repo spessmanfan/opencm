@@ -436,21 +436,28 @@
 // Humans
 
 /mob/living/carbon/human/handle_charge_collision(mob/living/carbon/xenomorph/xeno, datum/action/xeno_action/onclick/charger_charge/charger_ability)
+	apply_charger_ram(xeno, charger_ability.momentum, charger_ability.max_momentum)
+	charger_ability.lose_momentum(CCA_MOMENTUM_LOSS_MIN)
+	return XENO_CHARGE_TRY_MOVE
+
+/// Shared human ram effects, also used by the Queen's focused charge.
+/mob/living/carbon/human/proc/apply_charger_ram(mob/living/carbon/xenomorph/xeno, momentum = CHARGER_MAX_MOMENTUM, max_momentum = CHARGER_MAX_MOMENTUM)
+	last_damage_data = create_cause_data(xeno.caste_type, xeno)
 	playsound(loc, "punch", 25, TRUE)
 	attack_log += text("\[[time_stamp()]\] <font color='orange'>was xeno charged by [xeno] ([xeno.ckey])</font>")
 	xeno.attack_log += text("\[[time_stamp()]\] <font color='red'>xeno charged [src] ([src.ckey])</font>")
 	log_attack("[xeno] ([xeno.ckey]) xeno charged [src] ([src.ckey])")
 	var/momentum_mult = 5
-	if(charger_ability.momentum == charger_ability.max_momentum)
+	if(momentum == max_momentum)
 		momentum_mult = 8
-	take_overall_armored_damage(charger_ability.momentum * momentum_mult, ARMOR_MELEE, BRUTE, 60, 13) // Giving AP because this spreads damage out and then applies armor to them
-	apply_armoured_damage(charger_ability.momentum * momentum_mult/4, ARMOR_MELEE, BRUTE,"chest")
+	take_overall_armored_damage(momentum * momentum_mult, ARMOR_MELEE, BRUTE, 60, 13) // Giving AP because this spreads damage out and then applies armor to them
+	apply_armoured_damage(momentum * momentum_mult/4, ARMOR_MELEE, BRUTE,"chest")
 	xeno.visible_message(
 		SPAN_DANGER("[xeno] rams [src]!"),
 		SPAN_XENODANGER("You ram [src]!")
 	)
 	var/knockdown = 1
-	if(charger_ability.momentum == charger_ability.max_momentum)
+	if(momentum == max_momentum)
 		knockdown = 2
 	apply_effect(knockdown, WEAKEN)
 	animation_flash_color(src)
@@ -462,9 +469,8 @@
 	var/target_turf = get_step(src, ram_dir)
 	if(LinkBlocked(src, cur_turf, target_turf))
 		ram_dir = REVERSE_DIR(ram_dir)
-	step(src, ram_dir, charger_ability.momentum * 0.5)
-	charger_ability.lose_momentum(CCA_MOMENTUM_LOSS_MIN)
-	return XENO_CHARGE_TRY_MOVE
+	step(src, ram_dir, momentum * 0.5)
+
 
 // Fellow xenos
 

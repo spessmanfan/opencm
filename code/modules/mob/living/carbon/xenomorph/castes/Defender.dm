@@ -288,7 +288,6 @@
 	xeno.spin_circle()
 	xeno.emote("tail")
 
-	var/sweep_range = 1
 	for(var/mob/living/carbon/human in orange(sweep_range, get_turf(xeno)))
 		if (!isxeno_human(human) || xeno.can_not_harm(human))
 			continue
@@ -296,16 +295,22 @@
 			continue
 		if(HAS_TRAIT(human, TRAIT_NESTED))
 			continue
+		if(sweep_requires_sight && !(human in view(sweep_range, xeno)))
+			continue
 		step_away(human, xeno, sweep_range, 2)
 		xeno.flick_attack_overlay(human, "punch")
 		human.last_damage_data = create_cause_data(xeno.caste_type, xeno)
-		human.apply_armoured_damage(get_xeno_damage_slash(xeno, 15), ARMOR_MELEE, BRUTE)
+		var/damage = isnull(sweep_damage_min) ? sweep_damage : rand(sweep_damage_min, sweep_damage)
+		human.apply_armoured_damage(get_xeno_damage_slash(xeno, damage), ARMOR_MELEE, BRUTE, penetration = sweep_armor_penetration)
 		shake_camera(human, 2, 1)
 
 		if(human.mob_size < MOB_SIZE_BIG)
-			human.apply_effect(get_xeno_stun_duration(human, 1), WEAKEN)
+			human.apply_effect(get_xeno_stun_duration(human, sweep_knockdown), WEAKEN)
 
-		to_chat(human, SPAN_XENOWARNING("You are struck by [xeno]'s tail sweep!"))
+		if(sweep_armor_penetration)
+			to_chat(human, SPAN_HIGHDANGER("The Queen's bladed tail bites into your armor, sweeping you off your feet!"))
+		else
+			to_chat(human, SPAN_XENOWARNING("You are struck by [xeno]'s tail sweep!"))
 		playsound(human,'sound/weapons/alien_claw_block.ogg', 50, 1)
 
 	apply_cooldown()

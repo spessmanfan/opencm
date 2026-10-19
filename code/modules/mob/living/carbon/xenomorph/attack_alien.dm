@@ -218,6 +218,21 @@
 				return XENO_ATTACK_ACTION
 			attacking_xeno.flick_attack_overlay(src, "disarm")
 
+			if(isqueen(attacking_xeno) && stat != DEAD && !HAS_TRAIT(src, TRAIT_NESTED) && !attacking_xeno.can_not_harm(src))
+				var/datum/effects/sentinel_neuro_stacks/stacks = locate() in effects_list
+				if(stacks && stacks.stack_count >= 30)
+					Stun(2.5 SECONDS / GLOBAL_STATUS_MULTIPLIER)
+					KnockDown(2.5 SECONDS / GLOBAL_STATUS_MULTIPLIER)
+					playsound(loc, 'sound/weapons/alien_knockdown.ogg', 25, TRUE)
+					attacking_xeno.visible_message(SPAN_DANGER("[attacking_xeno] reaches out a limb and trips the clumsy [src]!"),
+						SPAN_XENODANGER("We reach out a limb and trip the clumsy host!"), null, 5, CHAT_TYPE_XENO_COMBAT)
+					to_chat(src, SPAN_HIGHDANGER("The Queen hooks a limb around your legs! Your toxin-weakened muscles fail you, and you crash to the ground!"))
+					SEND_SIGNAL(src, COMSIG_MOB_TACKLED_DOWN, attacking_xeno)
+					attacking_xeno.attack_log += "\[[time_stamp()]\] <font color='red'>Neurotoxin-tripped [key_name(src)]</font>"
+					attack_log += "\[[time_stamp()]\] <font color='orange'>Neurotoxin-tripped by [key_name(attacking_xeno)]</font>"
+					log_attack("[key_name(attacking_xeno)] neurotoxin-tripped [key_name(src)] in [get_area(src)] ([loc.x],[loc.y],[loc.z]).")
+					return XENO_ATTACK_ACTION
+
 			var/tackle_mult = 1
 			var/tackle_min_offset = 0
 			var/tackle_max_offset = 0
