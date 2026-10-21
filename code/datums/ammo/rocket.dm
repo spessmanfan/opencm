@@ -127,6 +127,8 @@
 
 /datum/ammo/rocket/ap/tank_towlauncher
 	max_range = 8
+	vehicle_damage_multiplier = 120 // 10 base damage -> 1200 against vehicles
+	vehicle_penetration = 200
 
 /datum/ammo/rocket/ltb
 	name = "cannon round"

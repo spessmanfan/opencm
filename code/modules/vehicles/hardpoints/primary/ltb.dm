@@ -58,7 +58,7 @@
 	var/charge_start_time = 0
 
 /**
- * Same lock-on/tracking charge as the secondary BRUTE launcher. Targets any living mob, blocked by the same things Aimed Shot is
+ * Same lock-on/tracking charge as the secondary BRUTE launcher. Targets living mobs and vehicles, blocked by the same things Aimed Shot is
  * (dense+opaque turfs, opaque objects, obscuring smoke...
  * The fired round homes in on the target same as Aimed Shot's own /datum/component/homing_projectile.
  */
@@ -67,12 +67,10 @@
 		SEND_SIGNAL(src, COMSIG_GUN_INTERRUPT_FIRE)
 		return NONE
 
-	if(!isliving(target))
-		to_chat(user, SPAN_WARNING("Invalid target!"))
-		return NONE
-
-	var/mob/living/living_target = target
-	if(living_target.is_dead())
+	// Vehicle footprint clicks can arrive as turfs instead of the chassis atom.
+	if(isturf(target))
+		target = get_multitile_vehicle_at(target)
+	if(!is_valid_lock_target(target))
 		to_chat(user, SPAN_WARNING("Invalid target!"))
 		return NONE
 
@@ -84,7 +82,7 @@
 		return NONE
 
 	// Re-validate once more after the charge
-	if(QDELETED(target) || living_target.is_dead() || check_shot_is_blocked(target))
+	if(!is_valid_lock_target(target) || check_shot_is_blocked(target))
 		to_chat(user, SPAN_WARNING("You lose the shot!"))
 		return NONE
 
@@ -93,8 +91,22 @@
 	homing_target = null
 	return .
 
+/obj/item/hardpoint/primary/cannon/proc/is_valid_lock_target(atom/target)
+	if(QDELETED(target) || target == owner)
+		return FALSE
+	if(isliving(target))
+		var/mob/living/living_target = target
+		return !living_target.is_dead()
+	if(istype(target, /obj/vehicle/multitile))
+		var/obj/vehicle/multitile/vehicle = target
+		return vehicle.health > 0
+	return FALSE
+
 /obj/item/hardpoint/primary/cannon/generate_bullet(mob/user, turf/origin_turf)
 	var/obj/projectile/fired_projectile = ..()
+	if(istype(homing_target, /obj/vehicle/multitile))
+		fired_projectile.ammo.vehicle_damage_multiplier = 1000 / initial(fired_projectile.ammo.damage)
+		fired_projectile.ammo.vehicle_penetration = 150
 	if(homing_target)
 		fired_projectile.AddComponent(/datum/component/homing_projectile, homing_target, user)
 
@@ -117,7 +129,9 @@
 			return TRUE
 
 		for(var/obj/path_obj in path_turf)
-			if(path_obj.get_projectile_hit_boolean(null) && path_obj.opacity)
+			if(path_obj == target || path_obj == owner)
+				continue
+			if(path_obj.density && path_obj.opacity)
 				return TRUE
 
 		for(var/obj/effect/particle_effect/smoke/smoke in path_turf)
@@ -130,9 +144,21 @@
 	anchor = new(get_origin_turf())
 	charge_start_time = world.time
 
-	var/mob/living_target = target
-	lockon_pixel_x = -living_target.pixel_x + living_target.base_pixel_x
-	lockon_pixel_y = (living_target.icon_size - world.icon_size) * 0.5 - living_target.pixel_y + living_target.base_pixel_y
+	if(isliving(target))
+		var/mob/living/living_target = target
+		lockon_pixel_x = -living_target.pixel_x + living_target.base_pixel_x
+		lockon_pixel_y = (living_target.icon_size - world.icon_size) * 0.5 - living_target.pixel_y + living_target.base_pixel_y
+	else
+		var/obj/vehicle/multitile/vehicle = target
+		lockon_pixel_x = -vehicle.pixel_x + vehicle.bound_x + (vehicle.bound_width - world.icon_size) / 2
+		lockon_pixel_y = -vehicle.pixel_y + vehicle.bound_y + (vehicle.bound_height - world.icon_size) / 2
+
+		// Shift the reticle off the vehicle's geometric center and onto the specific tile that was
+		// actually locked onto (pending_aim_turf, set by try_fire() right before this charge started).
+		var/turf/vehicle_anchor = get_turf(vehicle)
+		if(pending_aim_turf && vehicle_anchor)
+			lockon_pixel_x += (pending_aim_turf.x - vehicle_anchor.x) * world.icon_size
+			lockon_pixel_y += (pending_aim_turf.y - vehicle_anchor.y) * world.icon_size
 
 	apply_beam_visuals(target, TRUE)
 	aim_generation++
@@ -195,10 +221,12 @@
 
 /obj/item/hardpoint/primary/cannon/end_aim_visuals(atom/target, mob/living/user, success)
 	if(lockon_icon)
-		target.overlays -= lockon_icon
+		if(!QDELETED(target))
+			target.overlays -= lockon_icon
 		lockon_icon = null
 	if(lockon_direction_icon)
-		target.overlays -= lockon_direction_icon
+		if(!QDELETED(target))
+			target.overlays -= lockon_direction_icon
 		lockon_direction_icon = null
 	QDEL_NULL(laser_beam)
 	QDEL_NULL(anchor)

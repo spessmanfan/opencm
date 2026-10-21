@@ -1384,11 +1384,6 @@ and you're good to go.
 
 	projectile_to_fire.original = target
 
-	// turf-targeted projectiles are fired without scatter, because proc would raytrace them further away
-	var/ammo_flags = projectile_to_fire.ammo.flags_ammo_behavior | projectile_to_fire.projectile_override_flags
-	if(!(ammo_flags & AMMO_HITS_TARGET_TURF))
-		target = simulate_scatter(projectile_to_fire, target, curloc, targloc, user)
-
 	var/bullet_velocity = projectile_to_fire?.ammo?.shell_speed + velocity_add
 
 	if(params) // Apply relative clicked position from the mouse info to offset projectile
@@ -1403,14 +1398,28 @@ and you're good to go.
 				projectile_to_fire.p_y = text2num(params[ICON_Y])
 			var/atom/movable/clicked_target = original_target
 			if(istype(clicked_target))
-				projectile_to_fire.p_x -= clicked_target.bound_width / 2
-				projectile_to_fire.p_y -= clicked_target.bound_height / 2
+				projectile_to_fire.p_x -= (clicked_target.bound_width - clicked_target.bound_x) / 2
+				projectile_to_fire.p_y -= (clicked_target.bound_height - clicked_target.bound_y) / 2
 			else
 				projectile_to_fire.p_x -= world.icon_size / 2
 				projectile_to_fire.p_y -= world.icon_size / 2
 		else
 			projectile_to_fire.p_x -= world.icon_size / 2
 			projectile_to_fire.p_y -= world.icon_size / 2
+
+		// Translate pixel overflow beyond one tile into an actual turf offset, so clicking a specific
+		// part of a multi-tile target (e.g. a tank) aims at that tile instead of always its anchor turf.
+		var/x_tile_offset = ceil((projectile_to_fire.p_x - (world.icon_size / 2)) / world.icon_size)
+		var/y_tile_offset = ceil((projectile_to_fire.p_y - (world.icon_size / 2)) / world.icon_size)
+		if(x_tile_offset || y_tile_offset)
+			targloc = locate(targloc.x + x_tile_offset, targloc.y + y_tile_offset, targloc.z)
+			projectile_to_fire.p_x -= world.icon_size * x_tile_offset
+			projectile_to_fire.p_y -= world.icon_size * y_tile_offset
+
+	// turf-targeted projectiles are fired without scatter, because proc would raytrace them further away
+	var/ammo_flags = projectile_to_fire.ammo.flags_ammo_behavior | projectile_to_fire.projectile_override_flags
+	if(!(ammo_flags & AMMO_HITS_TARGET_TURF))
+		target = simulate_scatter(projectile_to_fire, target, curloc, targloc, user)
 
 	//Finally, make with the pew pew!
 	if(QDELETED(projectile_to_fire) || !isobj(projectile_to_fire))

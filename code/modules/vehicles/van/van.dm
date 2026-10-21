@@ -107,12 +107,15 @@
 		return
 	add_verb(M.client, list(
 		/obj/vehicle/multitile/proc/get_status_info,
+		/obj/vehicle/multitile/proc/open_controls_guide,
 	))
 	if(seat == VEHICLE_DRIVER)
 		add_verb(M.client, list(
 			/obj/vehicle/multitile/proc/toggle_door_lock,
 			/obj/vehicle/multitile/proc/activate_horn,
 			/obj/vehicle/multitile/proc/name_vehicle,
+			/obj/vehicle/multitile/proc/cycle_gear_up,
+			/obj/vehicle/multitile/proc/cycle_gear_down,
 			/obj/vehicle/multitile/proc/toggle_cruise_control,
 			/obj/vehicle/multitile/proc/set_cruise_control_granularity,
 			/obj/vehicle/multitile/proc/toggle_turn_signal_north,
@@ -136,12 +139,15 @@
 		return
 	remove_verb(M.client, list(
 		/obj/vehicle/multitile/proc/get_status_info,
+		/obj/vehicle/multitile/proc/open_controls_guide,
 	))
 	if(seat == VEHICLE_DRIVER)
 		remove_verb(M.client, list(
 			/obj/vehicle/multitile/proc/toggle_door_lock,
 			/obj/vehicle/multitile/proc/activate_horn,
 			/obj/vehicle/multitile/proc/name_vehicle,
+			/obj/vehicle/multitile/proc/cycle_gear_up,
+			/obj/vehicle/multitile/proc/cycle_gear_down,
 			/obj/vehicle/multitile/proc/toggle_cruise_control,
 			/obj/vehicle/multitile/proc/set_cruise_control_granularity,
 			/obj/vehicle/multitile/proc/toggle_turn_signal_north,

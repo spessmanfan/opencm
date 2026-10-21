@@ -1,6 +1,10 @@
 /datum/component/homing_projectile
 	dupe_mode = COMPONENT_DUPE_HIGHLANDER
 	var/atom/homing_target
+	/// Tile offset from homing_target's own turf to actually home in on, so a lock-on shot fired at a
+	/// specific part of a multi-tile target (e.g. a tank) keeps tracking that part instead of the target's anchor turf.
+	var/aim_offset_x = 0
+	var/aim_offset_y = 0
 
 /datum/component/homing_projectile/Initialize(atom/homing_target, mob/shooter)
 	if(!istype(parent, /obj/projectile))
@@ -33,13 +37,27 @@
 	homing_target = null
 	return ..()
 
+/// homing_target's own turf, offset by aim_offset_x/y, clamped back onto the target if the offset tile fell outside it.
+/datum/component/homing_projectile/proc/get_homing_turf()
+	var/turf/homing_turf = get_turf(homing_target)
+	if(!homing_turf || (!aim_offset_x && !aim_offset_y))
+		return homing_turf
+	var/turf/offset_turf = locate(homing_turf.x + aim_offset_x, homing_turf.y + aim_offset_y, homing_turf.z)
+	if(!offset_turf)
+		return homing_turf
+	if(istype(homing_target, /obj/vehicle/multitile))
+		var/obj/vehicle/multitile/vehicle_target = homing_target
+		if(!(offset_turf in vehicle_target.locs))
+			return homing_turf
+	return offset_turf
+
 // Continuously re-aims toward the target's live position every tick of flight
 /datum/component/homing_projectile/proc/step_retarget()
 	SIGNAL_HANDLER
 	if(QDELETED(homing_target))
 		return
 	var/obj/projectile/projectile = parent
-	var/turf/homing_turf = get_turf(homing_target)
+	var/turf/homing_turf = get_homing_turf()
 	if(!homing_turf || homing_turf == get_turf(projectile))
 		return
 	projectile.retarget(homing_turf, keep_angle = FALSE)
@@ -47,7 +65,7 @@
 /datum/component/homing_projectile/proc/terminal_retarget()
 	SIGNAL_HANDLER
 	var/obj/projectile/projectile = parent
-	var/turf/homing_turf = get_turf(homing_target)
+	var/turf/homing_turf = get_homing_turf()
 	projectile.speed *= 2 // Double speed to ensure hitting next tick despite eventual movement
 	projectile.retarget(homing_turf, keep_angle = FALSE)
 	qdel(src)

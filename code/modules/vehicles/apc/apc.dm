@@ -146,6 +146,8 @@ GLOBAL_LIST_EMPTY(command_apc_list)
 			/obj/vehicle/multitile/proc/toggle_door_lock,
 			/obj/vehicle/multitile/proc/activate_horn,
 			/obj/vehicle/multitile/proc/name_vehicle,
+			/obj/vehicle/multitile/proc/cycle_gear_up,
+			/obj/vehicle/multitile/proc/cycle_gear_down,
 			/obj/vehicle/multitile/proc/toggle_cruise_control,
 			/obj/vehicle/multitile/proc/set_cruise_control_granularity,
 			/obj/vehicle/multitile/proc/toggle_turn_signal_north,
@@ -153,6 +155,8 @@ GLOBAL_LIST_EMPTY(command_apc_list)
 			/obj/vehicle/multitile/proc/toggle_turn_signal_east,
 			/obj/vehicle/multitile/proc/toggle_turn_signal_west,
 			/obj/vehicle/multitile/proc/toggle_engine,
+			/obj/vehicle/multitile/proc/switch_hardpoint,
+			/obj/vehicle/multitile/proc/toggle_hardpoint_fire_mode,
 			/obj/vehicle/multitile/proc/cycle_hardpoint,
 		))
 		give_action(M, /datum/action/human_action/vehicle_action/toggle_door_lock)
@@ -206,6 +210,8 @@ GLOBAL_LIST_EMPTY(command_apc_list)
 			/obj/vehicle/multitile/proc/toggle_door_lock,
 			/obj/vehicle/multitile/proc/activate_horn,
 			/obj/vehicle/multitile/proc/name_vehicle,
+			/obj/vehicle/multitile/proc/cycle_gear_up,
+			/obj/vehicle/multitile/proc/cycle_gear_down,
 			/obj/vehicle/multitile/proc/toggle_cruise_control,
 			/obj/vehicle/multitile/proc/set_cruise_control_granularity,
 			/obj/vehicle/multitile/proc/toggle_turn_signal_north,
@@ -213,6 +219,8 @@ GLOBAL_LIST_EMPTY(command_apc_list)
 			/obj/vehicle/multitile/proc/toggle_turn_signal_east,
 			/obj/vehicle/multitile/proc/toggle_turn_signal_west,
 			/obj/vehicle/multitile/proc/toggle_engine,
+			/obj/vehicle/multitile/proc/switch_hardpoint,
+			/obj/vehicle/multitile/proc/toggle_hardpoint_fire_mode,
 			/obj/vehicle/multitile/proc/cycle_hardpoint,
 		))
 		remove_action(M, /datum/action/human_action/vehicle_action/toggle_door_lock)

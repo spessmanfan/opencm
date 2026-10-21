@@ -286,9 +286,10 @@
 	icon = 'icons/obj/vehicles/interiors/general.dmi'
 	icon_state = "weapons_loader"
 	color = "#00920c"
+	var/loader_type = /obj/structure/weapons_loader
 
 /obj/effect/landmark/interior/spawn/weapons_loader/on_load(datum/interior/I)
-	var/obj/structure/weapons_loader/R = new(loc)
+	var/obj/structure/weapons_loader/R = new loader_type(loc)
 
 	R.icon = icon
 	R.icon_state = icon_state

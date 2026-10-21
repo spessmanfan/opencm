@@ -31,6 +31,9 @@
 	var/damage_enviro = FALSE
 	/// How much armor it ignores before calculations take place
 	var/penetration = 0
+	/// Direct-impact modifiers used only by multitile vehicles; infantry and explosions retain normal stats.
+	var/vehicle_damage_multiplier = 1
+	var/vehicle_penetration = 0
 	/// The % chance it will imbed in a human
 	var/shrapnel_chance = 0
 	/// The shrapnel type the ammo will embed, if the chance rolls

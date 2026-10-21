@@ -56,6 +56,9 @@
 	var/hdpt_layer = HDPT_LAYER_WHEELS
 
 	/// List of offsets for where to place the muzzle flash for each direction.
+	/// Optional barrel tips relative to the mounted sprite center, before its visual transform.
+	var/list/muzzle_flash_anchors
+
 	var/list/muzzle_flash_pos = list(
 		"1" = list(0, 0),
 		"2" = list(0, 0),
@@ -195,6 +198,11 @@
 
 	/// Currently selected target to fire at. Set with set_target().
 	var/atom/target
+	/// Last click params associated with `target`, used to aim at a specific tile of a multi-tile target instead of always its anchor turf.
+	var/list/params
+	/// The exact turf resolve_aim_turf() last resolved from a click, set by try_fire() right before handle_fire() runs.
+	/// Read back by handle_fire() for the actual shot and by a homing weapon's start_aim_visuals() for the reticle.
+	var/turf/pending_aim_turf
 	/// The type of projectile to fire
 	var/projectile_type = /obj/projectile
 	/// How many ammo.current_rounds a single base handle_fire() shot costs. The flamer hardpoints (primary/flamer.dm, secondary/flamer.dm) set this to 0 and do their own reagent-based fuel deduction instead, since their ammo tracks real chemical volume rather than plain integer rounds.
@@ -226,7 +234,7 @@
 		owner = null
 	QDEL_NULL_LIST(backup_clips)
 	QDEL_NULL(ammo)
-	set_target(null)
+	set_target(null, null)
 	QDEL_NULL(rotation_soundloop)
 	return ..()
 
@@ -781,11 +789,13 @@
 /// Clean all firing references.
 /obj/item/hardpoint/proc/reset_fire()
 	shots_fired = 0
-	set_target(null)
+	set_target(null, null)
 	set_auto_firing(FALSE) //on abnormal exits automatic fire doesn't call set_auto_firing()
 
 /// Set the target and take care of hard delete.
-/obj/item/hardpoint/proc/set_target(atom/object)
+/obj/item/hardpoint/proc/set_target(atom/object, param_list = null)
+	if(param_list)
+		params = param_list
 	if(object == target || object == loc)
 		return
 	if(target)
@@ -797,6 +807,7 @@
 /// Set the target to its turf, so we keep shooting even when it was qdeled.
 /obj/item/hardpoint/proc/clean_target()
 	SIGNAL_HANDLER
+	params = null
 	target = get_turf(target)
 
 /// Print how much ammo is left to chat.
@@ -816,9 +827,29 @@
 	if(auto_firing)
 		reset_fire() //automatic fire doesn't reset itself from COMSIG_GUN_STOP_FIRE
 
+/**
+ * Resolves the exact turf under the cursor from raw click/hover params, instead of trusting whatever
+ * atom BYOND reports under the mouse. A multi-tile object (a vehicle) only actually occupies its own
+ * anchor turf's contents - the rest of its footprint is pure pixel overflow - so hovering any of its
+ * other tiles can report nothing at all. Screen-position math sidesteps that entirely and also gives us
+ * pixel-perfect tile resolution for free, without needing an icon's bound_width/bound_x at all.
+ *
+ * Falls back to object's own turf if there's no usable screen-loc in params (e.g. a non-mouse-driven call).
+ */
+/obj/item/hardpoint/proc/resolve_aim_turf(atom/object, mob/user, params)
+	if(params && user)
+		var/list/modifiers = params2list(params)
+		var/scr_loc = modifiers[SCREEN_LOC]
+		if(scr_loc)
+			var/turf/anchor = get_turf(user.client?.get_eye()) || get_turf(user)
+			var/turf/screen_turf = anchor ? params2turf(scr_loc, anchor, user.client) : null
+			if(screen_turf)
+				return screen_turf
+	return get_turf(object)
+
 /// Update the target if you dragged your mouse.
 /obj/item/hardpoint/proc/change_target(datum/source, atom/src_object, atom/over_object, turf/src_location, turf/over_location, src_control, over_control, params)
-	set_target(get_turf_on_clickcatcher(over_object, source, params))
+	set_target(get_turf_on_clickcatcher(over_object, source, params), params2list(params))
 
 /// Check if the gun can fire and add it to bucket autofire system if needed, or just fire the gun if not.
 /obj/item/hardpoint/proc/start_fire(datum/source, atom/object, turf/location, control, params)
@@ -833,7 +864,7 @@
 			to_chat(source, SPAN_WARNING("You need to wait [SPAN_HELPFUL(COOLDOWN_SECONDSLEFT(src, fire_cooldown))] seconds before [name] can be used again."))
 		return
 
-	set_target(get_turf_on_clickcatcher(object, source, params))
+	set_target(get_turf_on_clickcatcher(object, source, params), params2list(params))
 	trigger_held = TRUE
 
 	if(gun_firemode == GUN_FIREMODE_SEMIAUTO)
@@ -856,6 +887,8 @@
 		user = owner.get_seat_mob(allowed_seat)
 	if(!target || !user)
 		return NONE
+	if(!params)
+		params = src.params
 
 	return try_fire(target, user, params)
 
@@ -899,14 +932,20 @@
 	// plain vehicle-mounted weapon with uses_live_rotation_tracking (e.g. the APC's dualcannon).
 	var/actively_tracked = self_gimballed || turret_mounted || uses_live_rotation_tracking
 	if(actively_tracked && gun_firemode != GUN_FIREMODE_SEMIAUTO)
-		// Held-trigger fire modes (burst/automatic) don't wait for the barrel to finish swinging onto target
+		// Held-trigger fire modes (burst/automatic) don't wait for the barrel to finish swinging onto target -
+		// they just fire wherever it's currently pointed, which may no longer match the live cursor position.
 		var/obj/item/hardpoint/facing_source = get_rotation_owner()
 		target = facing_source.redirect_to_current_facing(get_origin_turf(), target)
-	else if(!in_firing_arc(target))
-		// A tracked weapon (turret-mounted, gimballed, or live-rotation) waits for its own facing to swing onto the target before firing
-		if(!actively_tracked || !wait_for_firing_arc(target, user))
-			to_chat(user, SPAN_WARNING("<b>The target is not within your firing arc!</b>"))
-			return NONE
+		pending_aim_turf = get_turf(target)
+	else
+		// Only a weapon that fires at the exact spot it was aimed at (semi-auto, or not live-tracked at
+		// all) should resolve the precise clicked tile of a multi-tile target.
+		pending_aim_turf = resolve_aim_turf(original_target, user, params)
+		if(!in_firing_arc(target))
+			// A tracked weapon (turret-mounted, gimballed, or live-rotation) waits for its own facing to swing onto the target before firing
+			if(!actively_tracked || !wait_for_firing_arc(target, user))
+				to_chat(user, SPAN_WARNING("<b>The target is not within your firing arc!</b>"))
+				return NONE
 
 	if(!target)
 		return NONE
@@ -1118,11 +1157,26 @@
 	if(isliving(user))
 		projectile_to_fire.def_zone = user.zone_selected
 
+	// pending_aim_turf (set by try_fire() right before this call) is the exact tile under the cursor at
+	// the moment of firing, resolved from screen position rather than from whatever atom BYOND reports
+	// under the mouse - so it correctly picks out one tile of a multi-tile target (e.g. another tank).
+	var/turf/targloc = pending_aim_turf || get_turf(target)
+
+	// A homing shot (LTB) re-aims at homing_target's bare turf every tick, which would otherwise wipe out
+	// the targeted tile the instant it starts flying. Give it the same tile, as an offset from the
+	// target's own turf, so it keeps tracking that part of the target rather than its generic anchor.
+	var/datum/component/homing_projectile/homing = projectile_to_fire.GetComponent(/datum/component/homing_projectile)
+	if(homing)
+		var/turf/homing_anchor = get_turf(homing.homing_target)
+		if(homing_anchor && targloc)
+			homing.aim_offset_x = targloc.x - homing_anchor.x
+			homing.aim_offset_y = targloc.y - homing_anchor.y
+
 	// turf-targeted projectiles are fired without scatter, because proc would raytrace them further away
 	var/ammo_flags = projectile_to_fire.ammo.flags_ammo_behavior | projectile_to_fire.projectile_override_flags
 	if(!HAS_FLAG(ammo_flags, AMMO_HITS_TARGET_TURF))
 		projectile_to_fire.scatter = scatter
-		target = simulate_scatter(projectile_to_fire, target, origin_turf, get_turf(target), user)
+		target = simulate_scatter(projectile_to_fire, target, origin_turf, targloc, user)
 
 	// Damaged weapons hit softer.
 	projectile_to_fire.ammo.damage *= get_combined_weapon_mult("damage_mult", WEAPON_MIN_DAMAGE_MULT)
@@ -1403,17 +1457,12 @@
 		return
 	last_desired_update_time = world.time
 
-	// Aim at the hovered mob/object itself, not its bare turf
-	var/atom/aim_target
-	if(ismob(object) || isobj(object))
-		aim_target = object
-	else
-		aim_target = get_turf_on_clickcatcher(object, user, params)
-	if(!aim_target)
-		return
-	var/turf/target_turf = get_turf(aim_target)
+	// Resolved from screen position rather than whatever atom BYOND reports under the mouse - a
+	// multi-tile target (a tank) only actually occupies its own anchor turf's contents, so hovering any
+	// of its other tiles would otherwise report nothing to aim at.
+	var/turf/target_turf = resolve_aim_turf(object, user, params)
 	var/turf/origin_turf = get_origin_turf()
-	if(!origin_turf || target_turf == origin_turf)
+	if(!target_turf || !origin_turf || target_turf == origin_turf)
 		return
 
 	desired_angle = Get_Angle_Grounded(origin_turf, target_turf)
@@ -1748,6 +1797,10 @@
 	owner.update_icon()
 
 /obj/item/hardpoint/proc/muzzle_flash(angle)
+	if(muzzle_flash_anchors && owner)
+		var/image/flash = get_mounted_muzzle_flash()
+		flash?.flick_overlay(owner, 3)
+		return
 	if(isnull(angle))
 		return
 
@@ -1806,3 +1859,35 @@
 	if(remover.stat > CONSCIOUS)
 		return FALSE
 	return TRUE
+
+/// Use the actual mounted image so hull offsets, turret tilt and a slaved gimbal all match.
+/obj/item/hardpoint/proc/get_mounted_muzzle_flash()
+	var/list/anchor = muzzle_flash_anchors?["[dir]"]
+	if(!anchor || !owner)
+		return
+	var/image/mounted_image
+	var/obj/item/hardpoint/holder/tank_turret/turret = loc
+	if(istype(turret))
+		var/list/mounted_images = turret.get_hardpoint_image()
+		mounted_image = mounted_images[turret.hardpoints.Find(src) + 1]
+	else
+		mounted_image = get_hardpoint_image()
+	if(!mounted_image)
+		return
+	var/matrix/mount_transform = mounted_image.transform
+	var/tip_x = mount_transform.a * anchor[1] + mount_transform.b * anchor[2] + mount_transform.c
+	var/tip_y = mount_transform.d * anchor[1] + mount_transform.e * anchor[2] + mount_transform.f
+	var/icon/weapon_icon = icon(disp_icon, "[disp_icon_state]_0", dir)
+	var/image/flash = image('icons/obj/items/weapons/projectiles.dmi', src, muzzleflash_icon_state, owner.layer + 0.1)
+	if(underlayer_north_muzzleflash && dir == NORTH)
+		flash.layer = owner.layer - 0.1
+	var/matrix/flash_transform = matrix()
+	flash_transform.Turn(dir2angle(dir))
+	// The flash's root is its center. Rotate it exactly like the barrel, then put it at the transformed tip.
+	var/matrix/orientation = matrix(mount_transform)
+	orientation.c = 0
+	orientation.f = 0
+	flash_transform.Multiply(orientation)
+	flash_transform.Translate(tip_x + (weapon_icon.Width() - 32) / 2 + mounted_image.pixel_x, tip_y + (weapon_icon.Height() - 32) / 2 + mounted_image.pixel_y)
+	flash.transform = flash_transform
+	return flash

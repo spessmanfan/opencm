@@ -402,9 +402,9 @@
 //Applies a linear transformation to bullet damage that will generally decrease damage done
 /obj/vehicle/multitile/bullet_act(obj/projectile/P)
 	var/dam_type = "bullet"
-	var/damage = P.damage
+	var/damage = P.damage * P.ammo.vehicle_damage_multiplier
 	var/ammo_flags = P.ammo.flags_ammo_behavior | P.projectile_override_flags
-	var/penetration = P.ammo.penetration
+	var/penetration = max(P.ammo.penetration, P.ammo.vehicle_penetration)
 	var/firer = P.firer
 
 	//IFF bullets magically stop themselves short of hitting friendly vehicles,

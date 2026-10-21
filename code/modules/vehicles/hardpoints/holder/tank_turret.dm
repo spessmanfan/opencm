@@ -122,7 +122,7 @@
 
 /obj/item/hardpoint/holder/tank_turret/update_icon()
 	var/broken = (health <= 0)
-	icon_state = "tank_turret_[broken]"
+	icon_state = "[disp_icon_state]_[broken]"
 
 	if(health <= initial(health))
 		var/image/damage_overlay = image(icon, icon_state = "damaged_turret")
@@ -312,7 +312,7 @@
 	if(sync_angle)
 		drag_self_gimballed_weapons(-deg)
 
-	var/obj/vehicle/multitile/tank/C = owner
+	var/obj/vehicle/multitile/C = owner
 	var/obj/item/hardpoint/support/artillery_module/AM
 	for(var/obj/item/hardpoint/support/artillery_module/A in C.hardpoints)
 		AM = A

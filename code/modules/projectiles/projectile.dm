@@ -514,6 +514,17 @@
 		return FALSE
 	var/ammo_flags = ammo.flags_ammo_behavior | projectile_override_flags
 
+	if(ammo.vehicle_damage_multiplier > 1 && !(ammo_flags & AMMO_PASSES_OVER_VEHICLES))
+		var/obj/vehicle/multitile/vehicle_hit = get_multitile_vehicle_at(turf)
+		var/obj/item/hardpoint/firing_weapon = shot_from
+		if(vehicle_hit && !(istype(firing_weapon) && firing_weapon.owner == vehicle_hit))
+			if(runtime_iff_group && vehicle_hit.get_target_lock(runtime_iff_group))
+				return FALSE
+			ammo.on_hit_obj(vehicle_hit, src)
+			if(!QDELETED(vehicle_hit))
+				vehicle_hit.bullet_act(src)
+			return TRUE
+
 	var/hit_turf = FALSE
 	// Explosive ammo always explodes on the turf of the clicked target
 	// So does ammo that's flagged to always hit the target
