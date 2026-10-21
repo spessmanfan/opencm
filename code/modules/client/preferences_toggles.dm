@@ -288,6 +288,17 @@ CLIENT_VERB(toggle_vehicle_units_mph)
 	//prefs.save_preferences()
 	to_chat(src, SPAN_BOLDNOTICE("Vehicle HUDs will now show speed in [(prefs.toggles_vehicle & VEHICLE_UNITS_MPH) ? "mph" : "km/h"] for you (this round only)."))
 
+CLIENT_VERB(toggle_vehicle_tank_doll)
+	set name = "Toggle Vehicle Tank Doll"
+	set category = "Preferences.Vehicle"
+	set desc = "Toggles showing the vehicle-part targeting doll, the zone-selector overlay used to aim at a specific hardpoint."
+
+	prefs.toggles_vehicle ^= VEHICLE_HIDE_TANK_DOLL
+	// TEMP removal for test merge/event cases.
+	//prefs.save_preferences()
+	mob?.hud_used?.apply_tank_doll_preference()
+	to_chat(src, SPAN_BOLDNOTICE("The tank targeting doll will [(prefs.toggles_vehicle & VEHICLE_HIDE_TANK_DOLL) ? "no longer" : "now"] be shown."))
+
 CLIENT_VERB(toggle_member_publicity)
 	set name = "Toggle Membership Publicity"
 	set category = "Preferences"

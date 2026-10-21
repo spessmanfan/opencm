@@ -81,6 +81,8 @@
 #define VEHICLE_SIMPLE_ACCELERATION (1<<2)
 ///Driver HUD shows speed/acceleration in mph instead of the default km/h
 #define VEHICLE_UNITS_MPH (1<<3)
+///Hides the vehicle-part targeting doll (the zone selector overlay used to aim at a specific hardpoint).
+#define VEHICLE_HIDE_TANK_DOLL (1<<4)
 
 ///Default toggles_vehicle value.
 #define TOGGLES_VEHICLE_DEFAULT 0

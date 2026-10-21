@@ -50,6 +50,8 @@
 	var/atom/movable/screen/zone_sel/vehicle/vehicle_zone_sel
 	var/atom/movable/screen/pull_icon
 	var/atom/movable/screen/throw_icon
+	var/atom/movable/screen/drop_icon
+	var/atom/movable/screen/resist_icon
 	var/atom/movable/screen/oxygen_icon
 	var/atom/movable/screen/fire_icon
 	var/atom/movable/screen/healths
@@ -315,20 +317,26 @@
 	static_inventory += using
 	move_intent = using
 
+/// Doll-hidden gets the original (pre-vehicle-doll) spot back; doll-shown keeps the row it was bumped to.
+/datum/hud/proc/pick_doll_aware_loc(doll_loc, no_doll_loc)
+	if(mymob?.client?.prefs?.toggles_vehicle & VEHICLE_HIDE_TANK_DOLL)
+		return no_doll_loc
+	return doll_loc
+
 /datum/hud/proc/draw_drop(datum/custom_hud/ui_datum, ui_alpha, ui_color)
-	var/atom/movable/screen/using = new /atom/movable/screen/drop()
-	using.icon = ui_datum.ui_style_icon
-	using.screen_loc = ui_datum.ui_drop_throw
+	drop_icon = new /atom/movable/screen/drop()
+	drop_icon.icon = ui_datum.ui_style_icon
+	drop_icon.screen_loc = pick_doll_aware_loc(ui_datum.ui_drop_throw, ui_datum.ui_drop_throw_no_doll)
 	if(ui_alpha)
-		using.alpha = ui_alpha
+		drop_icon.alpha = ui_alpha
 	if(ui_color)
-		using.color = ui_color
-	static_inventory += using
+		drop_icon.color = ui_color
+	static_inventory += drop_icon
 
 /datum/hud/proc/draw_throw(datum/custom_hud/ui_datum, ui_alpha, ui_color)
 	throw_icon = new /atom/movable/screen/throw_catch()
 	throw_icon.icon = ui_datum.ui_style_icon
-	throw_icon.screen_loc = ui_datum.ui_drop_throw
+	throw_icon.screen_loc = pick_doll_aware_loc(ui_datum.ui_drop_throw, ui_datum.ui_drop_throw_no_doll)
 	if(ui_alpha)
 		throw_icon.alpha = ui_alpha
 	if(ui_color)
@@ -338,19 +346,19 @@
 /datum/hud/proc/draw_pull(datum/custom_hud/ui_datum)
 	pull_icon = new /atom/movable/screen/pull()
 	pull_icon.icon = ui_datum.ui_style_icon
-	pull_icon.screen_loc = ui_datum.ui_pull
+	pull_icon.screen_loc = pick_doll_aware_loc(ui_datum.ui_pull, ui_datum.ui_pull_no_doll)
 	pull_icon.update_icon(mymob)
 	hotkeybuttons += pull_icon
 
 /datum/hud/proc/draw_resist(datum/custom_hud/ui_datum, ui_alpha, ui_color)
-	var/atom/movable/screen/using = new /atom/movable/screen/resist()
-	using.icon = ui_datum.ui_style_icon
-	using.screen_loc = ui_datum.ui_resist
+	resist_icon = new /atom/movable/screen/resist()
+	resist_icon.icon = ui_datum.ui_style_icon
+	resist_icon.screen_loc = pick_doll_aware_loc(ui_datum.ui_resist, ui_datum.ui_resist_no_doll)
 	if(ui_alpha)
-		using.alpha = ui_alpha
+		resist_icon.alpha = ui_alpha
 	if(ui_color)
-		using.color = ui_color
-	hotkeybuttons += using
+		resist_icon.color = ui_color
+	hotkeybuttons += resist_icon
 
 /datum/hud/proc/draw_left_hand(datum/custom_hud/ui_datum, ui_alpha, ui_color)
 	var/atom/movable/screen/inventory/inv_box = new /atom/movable/screen/inventory()
@@ -418,7 +426,9 @@
 	zone_sel.update_icon(mymob)
 	static_inventory += zone_sel
 
-/// Vehicle-part doll, placed directly above the human doll.
+/// Vehicle-part doll, placed directly above the human doll. Skips adding itself to the visible HUD
+/// (but still exists, so select_body_zone() has something to update) if the player has it hidden via
+/// the Vehicle preferences tab (VEHICLE_HIDE_TANK_DOLL).
 /datum/hud/proc/draw_vehicle_zone_sel(datum/custom_hud/ui_datum, ui_alpha, ui_color)
 	vehicle_zone_sel = new /atom/movable/screen/zone_sel/vehicle()
 	vehicle_zone_sel.icon = ui_datum.ui_style_icon
@@ -428,7 +438,36 @@
 	if(ui_color)
 		vehicle_zone_sel.color = ui_color
 	vehicle_zone_sel.update_icon(mymob)
+	if(mymob?.client?.prefs?.toggles_vehicle & VEHICLE_HIDE_TANK_DOLL)
+		return
 	static_inventory += vehicle_zone_sel
+
+/**
+ * Re-applies the player's VEHICLE_HIDE_TANK_DOLL preference to an already-built HUD: shows/hides the
+ * doll itself, and slides resist/pull/drop/throw back to their original pre-doll row when it's hidden.
+ * Called live from the preferences toggle, so no relog/respawn is needed to see the change.
+ */
+/datum/hud/proc/apply_tank_doll_preference()
+	if(!mymob?.client || !ui_datum)
+		return
+	var/hide_doll = (mymob.client.prefs.toggles_vehicle & VEHICLE_HIDE_TANK_DOLL) ? TRUE : FALSE
+
+	if(vehicle_zone_sel)
+		if(hide_doll)
+			static_inventory -= vehicle_zone_sel
+			mymob.client.remove_from_screen(vehicle_zone_sel)
+		else
+			static_inventory |= vehicle_zone_sel
+			mymob.client.add_to_screen(vehicle_zone_sel)
+
+	if(drop_icon)
+		drop_icon.screen_loc = hide_doll ? ui_datum.ui_drop_throw_no_doll : ui_datum.ui_drop_throw
+	if(throw_icon)
+		throw_icon.screen_loc = hide_doll ? ui_datum.ui_drop_throw_no_doll : ui_datum.ui_drop_throw
+	if(pull_icon)
+		pull_icon.screen_loc = hide_doll ? ui_datum.ui_pull_no_doll : ui_datum.ui_pull
+	if(resist_icon)
+		resist_icon.screen_loc = hide_doll ? ui_datum.ui_resist_no_doll : ui_datum.ui_resist
 
 // Re-render all alerts - also called in /datum/hud/show_hud() because it's needed there
 /datum/hud/proc/reorganize_alerts(mob/viewmob)

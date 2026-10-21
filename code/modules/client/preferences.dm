@@ -797,6 +797,7 @@ GLOBAL_LIST_INIT(be_special_flags, list(
 			dat += "<b>Control Layout:</b> <a href='byond://?_src_=prefs;preference=toggles_vehicle;flag=[VEHICLE_SIMPLE_CONTROLS]'><b>[toggles_vehicle & VEHICLE_SIMPLE_CONTROLS ? "Simple" : "Complex"]</b></a><br>"
 			dat += "<b>Acceleration Mode:</b> <a href='byond://?_src_=prefs;preference=toggles_vehicle;flag=[VEHICLE_SIMPLE_ACCELERATION]'><b>[toggles_vehicle & VEHICLE_SIMPLE_ACCELERATION ? "Simple" : "Complex"]</b></a><br>"
 			dat += "<b>Speed Units:</b> <a href='byond://?_src_=prefs;preference=toggles_vehicle;flag=[VEHICLE_UNITS_MPH]'><b>[toggles_vehicle & VEHICLE_UNITS_MPH ? "MPH" : "KM/H"]</b></a><br>"
+			dat += "<b>Tank Targeting Doll:</b> <a href='byond://?_src_=prefs;preference=toggles_vehicle;flag=[VEHICLE_HIDE_TANK_DOLL]'><b>[toggles_vehicle & VEHICLE_HIDE_TANK_DOLL ? "Hidden" : "Shown"]</b></a><br>"
 			dat += "</div>"
 
 	dat += "</div></body>"
@@ -2055,6 +2056,8 @@ GLOBAL_LIST_INIT(be_special_flags, list(
 					//save_preferences()
 					if(flag == VEHICLE_SIMPLE_ACCELERATION && user)
 						SEND_SIGNAL(user, COMSIG_MOB_VEHICLE_PREFS_CHANGED)
+					if(flag == VEHICLE_HIDE_TANK_DOLL)
+						user?.hud_used?.apply_tank_doll_preference()
 
 				if("ambientocclusion")
 					toggle_prefs ^= TOGGLE_AMBIENT_OCCLUSION

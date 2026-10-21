@@ -28,6 +28,10 @@
 	var/ui_zonesel = "EAST-1:28,1:5"
 	//Vehicle-part doll, directly above ui_zonesel
 	var/ui_vehicle_zonesel = "EAST-1:28,2:7"
+	//Original (pre-vehicle-doll) row, used instead of the one above when the player has the tank doll hidden.
+	var/ui_drop_throw_no_doll = "EAST-1:28,2:7"
+	var/ui_pull_no_doll = "EAST-2:26,2:7"
+	var/ui_resist_no_doll = "EAST-2:26,2:7"
 
 	//Gun buttons
 	var/ui_gun1 = "EAST-2:26,3:7"
