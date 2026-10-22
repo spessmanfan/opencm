@@ -1828,6 +1828,7 @@
 #include "code\modules\cm_aliens\structures\special_structure.dm"
 #include "code\modules\cm_aliens\structures\trap.dm"
 #include "code\modules\cm_aliens\structures\tunnel.dm"
+#include "code\modules\cm_aliens\structures\tunnel_picker.dm"
 #include "code\modules\cm_aliens\structures\xeno_structures_boilertrap.dm"
 #include "code\modules\cm_aliens\structures\research\producer.dm"
 #include "code\modules\cm_aliens\structures\special\egg_morpher.dm"

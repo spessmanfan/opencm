@@ -803,6 +803,66 @@ SUBSYSTEM_DEF(minimaps)
 	cic_drawings[hash] = blip
 	return blip
 
+/**
+ * Generates a cropped, zoomed-in slice of a z-level's tactical map centered on a world coordinate,
+ * with that flag's tracked blips baked directly into the image.
+ * Returns a servable asset url, or null if the map/target isn't available.
+ * Arguments:
+ * * zlevel: the z-level to source the map from
+ * * minimap_flag: a single minimap flag whose blips should be drawn onto the slice
+ * * world_x/world_y: the tile coordinate to center the slice on
+ * * target: client (or list of clients) the generated asset should be sent to
+ * * radius: how many tiles to show in each direction from the center
+ * * zoom: extra integer scale applied after cropping, for a closer-in look
+ * * atom_type_filter: if set, only blips tracking an atom of this type (eg. /obj/structure/tunnel) are drawn
+ */
+/datum/controller/subsystem/minimaps/proc/get_map_slice_url(zlevel, minimap_flag, world_x, world_y, target, radius = 24, zoom = 3, atom_type_filter = null)
+	if(!zlevel || !world_x || !world_y || !target)
+		return
+
+	var/datum/hud_displays/hud_data = minimaps_by_z["[zlevel]"]
+	if(!hud_data?.hud_image)
+		return
+
+	var/center_x = MINIMAP_PIXEL_FROM_WORLD(world_x) + hud_data.x_offset
+	var/center_y = MINIMAP_PIXEL_FROM_WORLD(world_y) + hud_data.y_offset
+	var/half = radius * MINIMAP_SCALE
+	var/x1 = center_x - half
+	var/y1 = center_y - half
+	var/x2 = center_x + half
+	var/y2 = center_y + half
+	var/slice_width = x2 - x1 + 1
+	var/slice_height = y2 - y1 + 1
+
+	var/icon/slice = icon(hud_data.hud_image)
+	slice.Crop(x1, y1, x2, y2)
+
+	// Keyed by tracked atom rather than the raw blip list, so callers can filter to only the
+	// kind of atom they care about (eg. tunnels) instead of baking in every tracked blip.
+	var/list/blips_by_source = hud_data.images_assoc["[minimap_flag]"]
+	for(var/atom/tracked_atom as anything in blips_by_source)
+		if(atom_type_filter && !istype(tracked_atom, atom_type_filter))
+			continue
+		var/image/blip = blips_by_source[tracked_atom]
+		if(!blip?.icon)
+			continue
+		var/blip_x = blip.pixel_x - x1 + 1
+		var/blip_y = blip.pixel_y - y1 + 1
+		if(blip_x < -16 || blip_y < -16 || blip_x > slice_width + 16 || blip_y > slice_height + 16)
+			continue // well outside the cropped area, skip blending it in
+		// getFlatIcon (rather than a bare icon(blip.icon, blip.icon_state) reconstruction) keeps the
+		// blip's own color/filters intact, so tinted blips don't blend in as a flat placeholder color.
+		slice.Blend(getFlatIcon(blip), ICON_OVERLAY, blip_x, blip_y)
+
+	if(zoom > 1)
+		slice.Scale(slice.Width() * zoom, slice.Height() * zoom)
+
+	var/key = icon2html(slice, target, keyonly = TRUE, non_standard_size = TRUE)
+	if(!key)
+		return
+
+	return SSassets.transport.get_asset_url(key)
+
 ///Default HUD screen minimap object
 /atom/movable/screen/minimap
 	name = "Minimap"

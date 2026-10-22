@@ -93,6 +93,7 @@
 @include meta.load-css('./interfaces/common/Dpad.scss');
 @include meta.load-css('./interfaces/common/ElectricalPanel.scss');
 @include meta.load-css('./interfaces/TacticalMap.scss');
+@include meta.load-css('./interfaces/TunnelPicker.scss');
 @include meta.load-css('./interfaces/StripMenu.scss');
 @include meta.load-css('./interfaces/CrewManifest.scss');
 @include meta.load-css('./interfaces/LateJoin.scss');

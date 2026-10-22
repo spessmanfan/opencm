@@ -1,0 +1,89 @@
+@use '../base.scss';
+
+.TunnelPicker__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: rgba(82, 55, 92, 0.25);
+  border: 1px solid transparent;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+
+  &:hover {
+    background-color: rgba(82, 55, 92, 0.45);
+    transform: translateX(2px);
+  }
+}
+
+.TunnelPicker__row--selected {
+  background-color: #52375c;
+  border-color: #c0f7ff;
+}
+
+.TunnelPicker__rowDesc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.TunnelPicker__rowDist {
+  flex-shrink: 0;
+  margin-left: 8px;
+  color: #c0f7ff;
+  font-size: 11px;
+}
+
+.TunnelPicker__previewFrame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #0e1014;
+  border: 1px solid #3a2a42;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.6);
+}
+
+.TunnelPicker__previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  animation: TunnelPickerBounceIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.TunnelPicker__previewEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  color: #8a7a94;
+  font-style: italic;
+  text-align: center;
+}
+
+@keyframes TunnelPickerBounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(0.97);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

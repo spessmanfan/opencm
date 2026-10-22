@@ -143,50 +143,61 @@
 	. = FALSE //For peace of mind when it comes to dealing with unintended proc failures
 	if(!istype(X) || X.is_mob_incapacitated(TRUE) || !isfriendly(X) || !hive)
 		return FALSE
-	if(X in contents)
-		var/list/input_tunnels = list()
+	if(!(X in contents))
+		return FALSE
 
-		var/list/sorted_tunnels = sort_list_dist(hive.tunnels, get_turf(X))
-		for(var/obj/structure/tunnel/T in sorted_tunnels)
-			if(T == src)
-				continue
-			if(!is_ground_level(T.z))
-				continue
+	var/list/available_tunnels = list()
+	var/list/sorted_tunnels = sort_list_dist(hive.tunnels, get_turf(X))
+	for(var/obj/structure/tunnel/T in sorted_tunnels)
+		if(T == src)
+			continue
+		if(!is_ground_level(T.z))
+			continue
+		available_tunnels += T
 
-			input_tunnels += list(T.tunnel_desc = T)
-		var/pick = tgui_input_list(usr, "Which tunnel would you like to move to?", "Tunnel", input_tunnels, theme="hive_status")
-		if(!pick)
-			return FALSE
+	if(!length(available_tunnels))
+		to_chat(X, SPAN_WARNING("[src] doesn't seem to lead anywhere."))
+		return FALSE
 
-		if(!(X in contents))
-			//Xeno moved out of the tunnel before they picked a destination
-			//No teleporting!
-			return FALSE
+	var/datum/tunnel_picker/picker = new(X, src, available_tunnels)
+	picker.tgui_interact(X)
+	return TRUE
 
-		to_chat(X, SPAN_XENONOTICE("We begin moving to our destination."))
+/**
+ * Moves X into T after the usual tunnel travel delay.
+ * Split out of pick_tunnel() so the /datum/tunnel_picker UI can trigger it once a destination is confirmed.
+ */
+/obj/structure/tunnel/proc/attempt_enter_tunnel(mob/living/carbon/xenomorph/X, obj/structure/tunnel/T)
+	. = FALSE
+	if(!istype(X) || !istype(T) || QDELETED(T) || T == src)
+		return FALSE
+	if(!(X in contents))
+		//Xeno moved out of the tunnel before they picked a destination
+		//No teleporting!
+		return FALSE
 
-		var/tunnel_time = TUNNEL_MOVEMENT_XENO_DELAY
+	to_chat(X, SPAN_XENONOTICE("We begin moving to our destination."))
 
-		if(X.mob_size >= MOB_SIZE_BIG) //Big xenos take WAY longer
-			tunnel_time = TUNNEL_MOVEMENT_BIG_XENO_DELAY
-		else if(islarva(X)) //Larva can zip through near-instantly, they are wormlike after all
-			tunnel_time = TUNNEL_MOVEMENT_LARVA_DELAY
+	var/tunnel_time = TUNNEL_MOVEMENT_XENO_DELAY
 
-		if(!do_after(X, tunnel_time, INTERRUPT_NO_NEEDHAND, 0))
-			return FALSE
+	if(X.mob_size >= MOB_SIZE_BIG) //Big xenos take WAY longer
+		tunnel_time = TUNNEL_MOVEMENT_BIG_XENO_DELAY
+	else if(islarva(X)) //Larva can zip through near-instantly, they are wormlike after all
+		tunnel_time = TUNNEL_MOVEMENT_LARVA_DELAY
 
-		var/obj/structure/tunnel/T = input_tunnels[pick]
+	if(!do_after(X, tunnel_time, INTERRUPT_NO_NEEDHAND, 0))
+		return FALSE
 
-		if(length(T.contents) > 2)// max 3 xenos in a tunnel
-			to_chat(X, SPAN_WARNING("The tunnel is too crowded, wait for others to exit!"))
-			return FALSE
-		if(!T.loc)
-			to_chat(X, SPAN_WARNING("The tunnel has collapsed before we reached its exit!"))
-			return FALSE
+	if(length(T.contents) > 2)// max 3 xenos in a tunnel
+		to_chat(X, SPAN_WARNING("The tunnel is too crowded, wait for others to exit!"))
+		return FALSE
+	if(!T.loc)
+		to_chat(X, SPAN_WARNING("The tunnel has collapsed before we reached its exit!"))
+		return FALSE
 
-		X.forceMove(T)
-		to_chat(X, SPAN_XENONOTICE("We have reached our destination."))
-		return TRUE
+	X.forceMove(T)
+	to_chat(X, SPAN_XENONOTICE("We have reached our destination."))
+	return TRUE
 
 /obj/structure/tunnel/proc/exit_tunnel(mob/living/carbon/xenomorph/X)
 	. = FALSE //For peace of mind when it comes to dealing with unintended proc failures
