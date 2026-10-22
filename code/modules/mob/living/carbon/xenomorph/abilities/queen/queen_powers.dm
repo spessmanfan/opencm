@@ -127,11 +127,6 @@
 		to_chat(xeno, SPAN_XENOWARNING("These weeds don't belong to your hive! You can't grow an ovipositor here."))
 		return
 
-	var/area/current_area = get_area(xeno)
-	if(current_area.unoviable_timer)
-		to_chat(xeno, SPAN_XENOWARNING("This area is not right for you to grow an ovipositor in."))
-		return
-
 	if(!xeno.check_alien_construction(current_turf))
 		return
 
@@ -831,7 +826,14 @@
 
 /datum/action/xeno_action/activable/pounce/queen_screech/action_activate()
 	var/mob/living/carbon/xenomorph/queen/xeno = owner
-	if(!istype(xeno) || !xeno.check_state() || xeno.ovipositor || hidden || !action_cooldown_check())
+	if(!istype(xeno) || !xeno.check_state() || hidden || !action_cooldown_check())
+		return
+	if(xeno.ovipositor)
+		// Anchored to the ovipositor: no charge is possible, so screech in place like the old onclick ability did.
+		if(!check_and_use_plasma_owner())
+			return
+		apply_cooldown()
+		release_screech()
 		return
 	. = ..()
 	if(xeno.selected_ability != src)

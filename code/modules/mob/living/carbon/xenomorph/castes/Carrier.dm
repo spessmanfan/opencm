@@ -257,6 +257,56 @@
 	else
 		to_chat(src, SPAN_WARNING("We can't carry more facehuggers on us."))
 
+/mob/living/carbon/xenomorph/carrier/proc/get_ready_pile_eggs(turf/T)
+	var/list/obj/item/xeno_egg/ready_eggs = list()
+	for(var/obj/item/xeno_egg/egg in T)
+		if(egg.hivenumber != hivenumber)
+			continue
+		ready_eggs += egg
+	return ready_eggs
+
+/mob/living/carbon/xenomorph/carrier/proc/store_huggers_from_egg_pile(turf/T)
+	if(huggers_max <= 0 || huggers_cur >= huggers_max)
+		to_chat(src, SPAN_WARNING("We can't carry more facehuggers on us."))
+		return
+
+	if(action_busy)
+		return
+
+	if(!length(get_ready_pile_eggs(T)))
+		to_chat(src, SPAN_WARNING("There are no facehuggers ready to take from this pile of eggs!"))
+		return
+
+	visible_message(SPAN_XENOWARNING("[src] presses against the pile of eggs, coaxing the children out..."),
+		SPAN_XENONOTICE("We press against the pile of eggs, coaxing the children out..."), null, 5)
+	playsound(T, "sound/effects/alien_egg_move.ogg", 25)
+
+	if(!do_after(src, 2 SECONDS, INTERRUPT_ALL, BUSY_ICON_FRIENDLY))
+		return
+
+	if(!Adjacent(T) || on_fire || huggers_max <= 0 || huggers_cur >= huggers_max)
+		return
+
+	// Snapshot-and-consume *after* the windup: we only ever take as many as we counted just
+	// now, and each taken egg is deleted immediately, so the same egg can never be counted or
+	// taken twice, even if the pile changed while we were channeling.
+	var/list/obj/item/xeno_egg/ready_eggs = get_ready_pile_eggs(T)
+	if(!length(ready_eggs))
+		to_chat(src, SPAN_WARNING("There are no facehuggers ready to take from this pile of eggs!"))
+		return
+
+	var/huggers_to_transfer = min(length(ready_eggs), huggers_max - huggers_cur)
+	huggers_cur += huggers_to_transfer
+	for(var/i in 1 to huggers_to_transfer)
+		var/obj/item/xeno_egg/consumed_egg = ready_eggs[i]
+		qdel(consumed_egg)
+
+	if(huggers_to_transfer == 1)
+		to_chat(src, SPAN_NOTICE("A facehugger scrambles out of the pile of eggs and climbs onto us. Now sheltering: [huggers_cur] / [huggers_max]."))
+	else
+		to_chat(src, SPAN_NOTICE("[huggers_to_transfer] facehuggers scramble out of the pile of eggs and climb onto us. Now sheltering: [huggers_cur] / [huggers_max]."))
+	behavior_delegate?.on_update_icons()
+
 /mob/living/carbon/xenomorph/carrier/proc/throw_hugger(atom/object)
 	if(!object)
 		return
@@ -290,6 +340,16 @@
 				return
 			store_huggers_from_egg_morpher(morpher)
 			return
+
+	//target a pile of unplanted eggs to pull huggers from it directly
+	if(istype(object, /obj/item/xeno_egg))
+		var/obj/item/xeno_egg/target_pile_egg = object
+		if(isturf(target_pile_egg.loc) && Adjacent(target_pile_egg))
+			if(on_fire)
+				to_chat(src, SPAN_WARNING("Reaching into the pile of eggs while we're on fire would burn the facehuggers in it!"))
+				return
+			store_huggers_from_egg_pile(target_pile_egg.loc)
+		return
 
 	var/obj/item/clothing/mask/facehugger/child = get_active_hand()
 	if(!child) //empty active hand

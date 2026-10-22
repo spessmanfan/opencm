@@ -162,6 +162,8 @@
 			var/datum/custom_hud/alien/ui_datum = GLOB.custom_huds_list[HUD_ALIEN]
 			client.add_to_screen(r_hand)
 			r_hand.screen_loc = ui_datum.hud_slot_offset(r_hand, ui_datum.ui_rhand)
+		if(hides_held_item_sprite(r_hand))
+			return
 		var/t_state = r_hand.item_state
 		if(!t_state)
 			t_state = r_hand.icon_state
@@ -180,6 +182,8 @@
 			var/datum/custom_hud/alien/ui_datum = GLOB.custom_huds_list[HUD_ALIEN]
 			client.add_to_screen(l_hand)
 			l_hand.screen_loc = ui_datum.hud_slot_offset(l_hand, ui_datum.ui_lhand)
+		if(hides_held_item_sprite(l_hand))
+			return
 		var/t_state = l_hand.item_state
 		if(!t_state)
 			t_state = l_hand.icon_state
@@ -191,6 +195,11 @@
 		overlays_standing[X_L_HAND_LAYER] = inhand_image
 
 		apply_overlay(X_L_HAND_LAYER)
+
+/mob/living/carbon/xenomorph/proc/hides_held_item_sprite(obj/item/I)
+	if(istype(I, /obj/item/xeno_egg) && (isburrower(src) || ishivelord(src) || iscarrier(src)))
+		return TRUE
+	return FALSE
 
 /mob/living/carbon/xenomorph/update_inv_back()
 	if(!backpack_icon_holder)

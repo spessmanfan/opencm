@@ -726,6 +726,9 @@
 /turf/proc/can_dig_xeno_tunnel()
 	return FALSE
 
+/turf/open/floor/can_dig_xeno_tunnel()
+	return TRUE
+
 /turf/open/gm/can_dig_xeno_tunnel()
 	return TRUE
 

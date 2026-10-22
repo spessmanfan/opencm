@@ -136,7 +136,7 @@
 		. = ..()
 
 /obj/structure/window_frame/attack_alien(mob/living/carbon/xenomorph/user)
-	if(user.claw_type < CLAW_TYPE_SHARP)
+	if(isrunner(user) || islesserdrone(user))
 		return ..()
 	user.animation_attack_on(src)
 	playsound(src, 'sound/effects/metalhit.ogg', 25, 1)
@@ -147,7 +147,7 @@
 /obj/structure/window_frame/handle_tail_stab(mob/living/carbon/xenomorph/xeno, blunt_stab)
 	if(unslashable || health <= 0)
 		return TAILSTAB_COOLDOWN_NONE
-	if(xeno.claw_type < CLAW_TYPE_SHARP)
+	if(isrunner(xeno) || islesserdrone(xeno))
 		return TAILSTAB_COOLDOWN_NONE
 	playsound(src, 'sound/effects/metalhit.ogg', 25, 1)
 	var/hits_divisor = reinforced ? XENO_HITS_TO_DESTROY_R_WINDOW_FRAME : XENO_HITS_TO_DESTROY_WINDOW_FRAME

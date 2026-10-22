@@ -934,11 +934,6 @@
 		// spacecheck already cleans up the template
 		return FALSE
 
-	if(choice == XENO_STRUCTURE_CORE && target_area.unoviable_timer)
-		to_chat(xeno, SPAN_WARNING("This area does not feel right for you to build this in."))
-		qdel(structure_template)
-		return FALSE
-
 	if((choice == XENO_STRUCTURE_CORE) && isqueen(xeno) && xeno.hive.has_structure(XENO_STRUCTURE_CORE))
 		if(xeno.hive.hive_location.hardcore || world.time > XENOMORPH_PRE_SETUP_CUTOFF)
 			to_chat(xeno, SPAN_WARNING("We can't rebuild this structure!"))

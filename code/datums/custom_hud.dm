@@ -161,6 +161,7 @@
 	ui_style_icon = 'icons/mob/hud/alien_standard.dmi'
 
 	ui_resist = "WEST+9:20,1:5"
+	ui_resist_no_doll = "WEST+9:20,1:5"
 	UI_HEALTH_LOC = "EAST-1:28,7:13"
 
 	var/ui_alien_nightvision = "EAST-1:28,9:13"

@@ -140,11 +140,11 @@
 
 	user.visible_message(SPAN_XENONOTICE("[user] starts planting [src]."), SPAN_XENONOTICE("You start planting [src]."), null, 5)
 
-	var/plant_time = 35
+	var/plant_time = 35 / 1.2 // +20% egg planting speed
 	if(isdrone(user))
-		plant_time = 25
+		plant_time = 25 / 1.2
 	else if(iscarrier(user))
-		plant_time = 10
+		plant_time = 10 / 1.2
 
 	if(!do_after(user, plant_time, INTERRUPT_ALL|BEHAVIOR_IMMOBILE, BUSY_ICON_BUILD))
 		return

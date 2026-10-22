@@ -93,7 +93,6 @@
 	var/list/hive_structure_types = list(
 		XENO_STRUCTURE_CORE = /datum/construction_template/xenomorph/core,
 		XENO_STRUCTURE_CLUSTER = /datum/construction_template/xenomorph/cluster,
-		XENO_STRUCTURE_EGGMORPH = /datum/construction_template/xenomorph/eggmorph,
 		XENO_STRUCTURE_RECOVERY = /datum/construction_template/xenomorph/recovery,
 		XENO_STRUCTURE_PLASMA_TREE = /datum/construction_template/xenomorph/plasma_tree
 	)

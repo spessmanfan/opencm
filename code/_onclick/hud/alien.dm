@@ -4,6 +4,7 @@
 /datum/hud/alien/New(mob/living/carbon/xenomorph/owner)
 	..()
 	ui_alien_datum = GLOB.custom_huds_list[HUD_ALIEN]
+	ui_datum = ui_alien_datum
 
 	draw_act_intent(ui_alien_datum)
 	draw_mov_intent(ui_alien_datum)

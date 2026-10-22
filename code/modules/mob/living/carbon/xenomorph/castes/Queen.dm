@@ -3,6 +3,7 @@
 #define XENO_QUEEN_TEMP_AGE_EXTENSION (15 SECONDS)
 #define XENO_QUEEN_DEATH_DELAY (5 MINUTES)
 #define YOUNG_QUEEN_HEALTH_MULTIPLIER 0.5
+#define XENO_QUEEN_MAX_UNPLANTED_EGGS 30
 
 /datum/caste_datum/queen
 	caste_type = XENO_CASTE_QUEEN
@@ -304,6 +305,7 @@
 	var/ovipositor = FALSE //whether the Queen is attached to an ovipositor
 	var/queen_ability_cooldown = 0
 	var/egg_amount = 0 //amount of eggs inside the queen
+	var/egg_limit_warned = FALSE //whether we've already told the queen her unplanted egg tile is full
 	var/screech_sound_effect_list = list('sound/voice/alien_queen_screech.ogg') //the noise the Queen makes when she screeches. Done this way for VV purposes.
 	var/queen_ovipositor_icon
 	var/queen_standing_icon
@@ -650,13 +652,19 @@
 				overwatch(observed_xeno, TRUE)
 
 		if(ovipositor && !is_mob_incapacitated(TRUE))
-			egg_amount += 0.07 //one egg approximately every 30 seconds
-			if(egg_amount >= 1)
-				if(isturf(loc))
-					var/turf/T = loc
-					if(length(T.contents) <= 25) //so we don't end up with a million object on that turf.
-						egg_amount--
-						new /obj/item/xeno_egg(loc, hivenumber)
+			egg_amount += 0.125 //one egg approximately every 16 seconds (~75 eggs per 20 minutes)
+			if(egg_amount >= 1 && isturf(loc))
+				var/turf/T = loc
+				var/unplanted_eggs = 0
+				for(var/obj/item/xeno_egg/egg in T)
+					unplanted_eggs++
+				if(unplanted_eggs < XENO_QUEEN_MAX_UNPLANTED_EGGS) //so we don't end up with a million unplanted eggs on that turf.
+					egg_amount--
+					new /obj/item/xeno_egg(loc, hivenumber)
+					egg_limit_warned = FALSE
+				else if(!egg_limit_warned)
+					to_chat(src, SPAN_XENOWARNING("We have too many unplanted eggs gathered here! We must wait for them to be planted or moved before laying more."))
+					egg_limit_warned = TRUE
 			overlays -= acid_overlay
 
 		// Grant temporary maturity if near the hive_location for early game
@@ -874,6 +882,7 @@
 	recalculate_actions()
 
 	egg_amount = 0
+	egg_limit_warned = FALSE
 	extra_build_dist = initial(extra_build_dist)
 	egg_planting_range = initial(egg_planting_range)
 	for(var/datum/action/xeno_action/action in actions)
@@ -950,3 +959,4 @@
 #undef XENO_QUEEN_TEMP_AGE_EXTENSION
 #undef XENO_QUEEN_DEATH_DELAY
 #undef YOUNG_QUEEN_HEALTH_MULTIPLIER
+#undef XENO_QUEEN_MAX_UNPLANTED_EGGS

@@ -20,7 +20,7 @@
 
 	caste_desc = "A builder of hives."
 	can_hold_facehuggers = TRUE
-	can_hold_eggs = CAN_HOLD_TWO_HANDS
+	can_hold_eggs = CAN_HOLD_ONE_HAND
 	acid_level = 1
 	weed_level = WEED_LEVEL_STANDARD
 	max_build_dist = 1

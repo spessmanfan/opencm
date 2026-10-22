@@ -16,6 +16,7 @@
 
 	deevolves_to = list(XENO_CASTE_DRONE)
 	caste_desc = "A digger and trapper."
+	can_hold_eggs = CAN_HOLD_ONE_HAND
 	acid_level = 2
 	weed_level = WEED_LEVEL_STANDARD
 	evolution_allowed = FALSE
